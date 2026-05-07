@@ -1,2 +1,1 @@
-
-# small-project
+web-application for linkedU
