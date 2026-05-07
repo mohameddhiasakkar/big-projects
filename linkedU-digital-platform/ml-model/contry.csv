@@ -1,0 +1,44 @@
+institution_name,country,major,language,moyenne,tuition_tier
+Campus La Salle Saint-Étienne,France,engineering,french,13.5,2
+CMA,France,craftsmanship,french,12.0,1
+YA School of Business,France,business,french,12.5,2
+Upe Alternance Saint-Étienne,France,vocational_training,french,11.5,1
+IAE Saint-Étienne,France,business,french,13.0,1
+I Business School,France,business,french,12.0,2
+EL HOTEL & TOURISME BUSINESS SCHOOL,France,hotel_tourism,french,11.5,2
+Sport School Lyon,France,sports_management,french,12.0,2
+École Formation CFAI AFPI,France,industrial_trades,french,11.0,1
+SE CENTRALE LYON,France,engineering,french,15.0,1
+Tech Lyon,France,technology,french,13.0,2
+Mont School of Business,France,business,french,12.5,2
+Francia Business School,France,business,bilingual,13.0,2
+Iller International University,Germany,business,english,14.0,3
+SRH University,Germany,applied_sciences,english,13.5,3
+Efrei,France,digital_engineering,french,14.0,2
+Estiam,France,it_engineering,french,13.5,2
+ESPI,France,real_estate,french,12.0,2
+EDC Paris Business School,France,business,bilingual,14.0,3
+Y Schools,France,digital_tools,french,12.5,2
+INSEEC,France,business,bilingual,13.5,2
+Change College,France,business,french,11.5,1
+3iL,France,engineering,french,13.0,2
+ESTP,France,civil_engineering,french,14.5,2
+IST,France,science_technology,french,13.0,2
+Université Cattolica,Italy,multidisciplinary,italian,15.0,2
+LUMSA,Italy,multidisciplinary,italian,13.5,2
+VUMK,Unknown,management,english,12.0,2
+Sotrudnichestvo,Russia,multidisciplinary,russian,14.0,1
+UM6SS,Morocco,health_sciences,french,15.0,2
+Université Privée de Fès,Morocco,multidisciplinary,bilingual,13.0,2
+Zhejiang Chinese Medical University,China,chinese_medicine,chinese,15.5,1
+Sichuan University,China,multidisciplinary,chinese,16.0,1
+Université de Shenzhen,China,multidisciplinary,chinese,15.0,1
+OU Global Education,Unknown,general_studies,english,11.0,2
+University of Suffolk,UK,multidisciplinary,english,12.5,3
+University of Roehampton,UK,multidisciplinary,english,13.0,3
+Canterbury Christ Church University,UK,multidisciplinary,english,12.0,3
+Pearson,UK,test_preparation,english,10.0,2
+Oxford Brookes University,UK,multidisciplinary,english,13.5,3
+University of Plymouth,UK,multidisciplinary,english,12.5,3
+Bath Spa University,UK,multidisciplinary,english,12.0,3
+Lina Schools,Unknown,general_studies,english,11.0,2

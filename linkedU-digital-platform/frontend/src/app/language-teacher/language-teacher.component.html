@@ -1,0 +1,137 @@
+<div class="teacher-layout">
+  <header class="teacher-header">
+    <div>
+      <h1>Générateur de quiz pour professeur de langues</h1>
+      <p>Créez des quiz étape par étape : créez le quiz, ajoutez des questions, puis terminez.</p>
+    </div>
+    <button class="logout-btn" (click)="logout()">Déconnexion</button>
+  </header>
+
+  <div class="hero-strip" *ngIf="createdQuiz">
+    <div>
+      <span class="hero-kicker">Quiz actif</span>
+      <h3>{{ createdQuiz.title }}</h3>
+      <p>
+        {{ createdQuiz.language || 'N/A' }} - {{ createdQuestionsCount }} question(s)
+        <span *ngIf="createdQuiz.endTime" style="margin-left: 10px; font-weight: 500;">
+          (Finit le : {{ createdQuiz.endTime | date:'medium' }})
+        </span>
+      </p>
+    </div>
+    <div class="hero-pill">Étape {{ currentStep }} / 3</div>
+  </div>
+
+  <div class="steps">
+    <button [class.active]="currentStep === 1" (click)="goToStep(1)">1. Quiz</button>
+    <button [class.active]="currentStep === 2" [disabled]="!selectedQuizId" (click)="goToStep(2)">2. Questions</button>
+    <button [class.active]="currentStep === 3" [disabled]="!selectedQuizId" (click)="goToStep(3)">3. Fin</button>
+  </div>
+
+  <p class="msg success" *ngIf="successMsg">{{ successMsg }}</p>
+  <p class="msg error" *ngIf="errorMsg">{{ errorMsg }}</p>
+
+  <section class="card" *ngIf="currentStep === 1">
+    <h2>Créer un quiz</h2>
+    <div class="grid-3">
+      <input type="text" [(ngModel)]="quizForm.title" placeholder="Titre du quiz" />
+      <select [(ngModel)]="quizForm.language">
+        <option value="" disabled>Sélectionner la langue</option>
+        <option *ngFor="let language of languageOptions" [value]="language">{{ language }}</option>
+      </select>
+    </div>
+    <div class="grid-3" style="margin-top: 1rem; align-items: flex-end;">
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <label style="font-size: 0.85rem; color: #555; font-weight: bold;">Heure de début</label>
+        <input type="datetime-local" [(ngModel)]="quizForm.startTime" />
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <label style="font-size: 0.85rem; color: #555; font-weight: bold;">Heure de fin</label>
+        <input type="datetime-local" [(ngModel)]="quizForm.endTime" />
+      </div>
+      <button (click)="createQuiz()" [disabled]="savingQuiz">{{ savingQuiz ? 'Création...' : 'Créer et continuer' }}</button>
+    </div>
+    <textarea [(ngModel)]="quizForm.description" placeholder="Courte description pour les étudiants"></textarea>
+  </section>
+
+  <section class="card" *ngIf="currentStep === 2 && selectedQuizId">
+    <h2>Ajouter la question {{ questionCursor }}</h2>
+    <p class="hint">
+      Quiz : <strong>{{ createdQuiz?.title }}</strong>
+      ({{ createdQuiz?.language || 'N/A' }})
+    </p>
+    <div class="question-form-stack">
+      <textarea [(ngModel)]="questionForm.questionText" placeholder="Écrire la question"></textarea>
+      <input type="text" [(ngModel)]="questionForm.optionA" placeholder="Option A" />
+      <input type="text" [(ngModel)]="questionForm.optionB" placeholder="Option B" />
+      <input type="text" [(ngModel)]="questionForm.optionC" placeholder="Option C" />
+      <input type="text" [(ngModel)]="questionForm.optionD" placeholder="Option D" />
+      <select [(ngModel)]="questionForm.correctOption">
+        <option value="A">Correct : A</option>
+        <option value="B">Correct : B</option>
+        <option value="C">Correct : C</option>
+        <option value="D">Correct : D</option>
+      </select>
+    </div>
+    <div class="actions-row">
+      <button class="secondary" (click)="addQuestionAndContinue()" [disabled]="savingQuestion">
+        {{ savingQuestion ? 'Enregistrement...' : 'Enregistrer et question suivante' }}
+      </button>
+      <button class="primary" (click)="addQuestionAndFinish()" [disabled]="savingQuestion">
+        {{ savingQuestion ? 'Enregistrement...' : 'Enregistrer et terminer le quiz' }}
+      </button>
+    </div>
+    <p class="wizard-note">Choisissez la réponse correcte pour chaque question avant de continuer.</p>
+  </section>
+
+  <section class="card" *ngIf="currentStep === 3">
+    <h2>Quiz prêt</h2>
+    <p>
+      <strong>{{ createdQuiz?.title }}</strong> est prêt avec
+      <strong>{{ createdQuestionsCount }}</strong> question(s).
+    </p>
+    <div class="actions-row">
+      <button class="secondary" (click)="goToStep(2)">Ajouter plus de questions</button>
+      <button class="primary" (click)="startNewQuizFlow()">Démarrer un nouveau quiz</button>
+    </div>
+  </section>
+<section class="card">
+    <div class="card-header-row">
+      <h2>Vos quiz existants</h2>
+      <span class="count-badge">{{ quizzes.length }} au total</span>
+    </div>
+    <p *ngIf="loading">Chargement des quiz...</p>
+    <div class="quiz-list" *ngIf="!loading">
+      <button
+        class="quiz-item"
+        *ngFor="let quiz of quizzes"
+        [class.active]="quiz.id === selectedQuizId"
+        (click)="selectQuiz(quiz.id)">
+        <strong>{{ quiz.title }}</strong>
+        <span>
+          {{ quiz.language || 'N/A' }}
+          <small *ngIf="$any(quiz).startTime || $any(quiz).start_time" style="display: block; margin-top: 4px; font-size: 0.75rem; color: #666;">
+            Statut : <strong [style.color]="getQuizStatus(quiz) === 'Active' ? '#28a745' : '#d9534f'">{{ getQuizStatus(quiz) === 'Active' ? 'Actif' : (getQuizStatus(quiz) === 'Upcoming' ? 'À venir' : 'Expiré') }}</strong>
+            <br>
+            Fenêtre : {{ ($any(quiz).startTime || $any(quiz).start_time) | date:'short' }} - {{ ($any(quiz).endTime || $any(quiz).end_time) | date:'short' }}
+          </small>
+        </span>
+      </button>
+      <p *ngIf="quizzes.length === 0">Aucun quiz pour le moment.</p>
+    </div>
+  </section>
+
+  <section class="card" *ngIf="selectedQuizId">
+    <h2>Questions dans le quiz sélectionné</h2>
+    <div *ngFor="let q of selectedQuizQuestions" class="question-item">
+      <p><strong>{{ q.questionText }}</strong></p>
+      <ul>
+        <li>A: {{ q.optionA }}</li>
+        <li>B: {{ q.optionB }}</li>
+        <li>C: {{ q.optionC }}</li>
+        <li>D: {{ q.optionD }}</li>
+      </ul>
+      <span class="correct">Correct : {{ q.correctOption }}</span>
+    </div>
+    <p *ngIf="selectedQuizQuestions.length === 0">Aucune question pour ce quiz.</p>
+  </section>
+</div>

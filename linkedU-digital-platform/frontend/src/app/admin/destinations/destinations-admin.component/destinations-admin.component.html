@@ -1,0 +1,299 @@
+<div class="dest-page">
+
+  <!-- Header -->
+  <div class="dest-header">
+    <div class="dest-header-left">
+      <h2 *ngIf="viewMode === 'list'">
+        <i class="fa-solid fa-globe"></i>
+        Destinations
+      </h2>
+      <div *ngIf="viewMode !== 'list'" class="breadcrumb">
+        <button (click)="showList()" class="back-btn">
+          <i class="fa-solid fa-arrow-left"></i>
+          Back
+        </button>
+        <h2>
+          <i *ngIf="viewMode === 'create'" class="fa-solid fa-plus-circle"></i>
+          <i *ngIf="viewMode === 'edit'" class="fa-solid fa-pen"></i>
+          {{ viewMode === 'create' ? 'New Destination' : 'Edit: ' + selectedDestination?.countryName }}
+        </h2>
+      </div>
+    </div>
+    <button *ngIf="viewMode === 'list'" (click)="showCreate()" class="primary-btn">
+      <i class="fa-solid fa-plus"></i>
+      Add Destination
+    </button>
+  </div>
+
+  <div *ngIf="successMessage" class="alert alert-success">
+    <i class="fa-solid fa-circle-check"></i>
+    {{ successMessage }}
+  </div>
+  <div *ngIf="errorMessage" class="alert alert-error">
+    <i class="fa-solid fa-circle-exclamation"></i>
+    {{ errorMessage }}
+  </div>
+
+  <!-- ── LIST ── -->
+  <div *ngIf="viewMode === 'list'">
+    <div *ngIf="isLoading" class="loading-state">
+      <div class="spinner"></div>
+      <p>
+        <i class="fa-solid fa-spinner fa-spin"></i>
+        Loading...
+      </p>
+    </div>
+    <div *ngIf="!isLoading && destinations.length === 0" class="empty-state">
+      <div class="empty-icon">
+        <i class="fa-solid fa-globe"></i>
+      </div>
+      <h3>No destinations yet</h3>
+      <p>Click "Add Destination" to create your first one.</p>
+    </div>
+    <div *ngIf="!isLoading && destinations.length > 0" class="dest-grid">
+      <div *ngFor="let dest of destinations" class="dest-card">
+
+        <div *ngIf="deleteConfirmId === dest.id" class="delete-confirm">
+          <p>Delete <strong>{{ dest.countryName }}</strong>?</p>
+          <div class="delete-actions">
+            <button (click)="cancelDelete()" class="cancel-btn">
+              <i class="fa-solid fa-times"></i>
+              Cancel
+            </button>
+            <button (click)="onDelete(dest.id!)" [disabled]="isDeleting" class="danger-btn">
+              <i *ngIf="!isDeleting" class="fa-solid fa-trash"></i>
+              <i *ngIf="isDeleting" class="fa-solid fa-spinner fa-spin"></i>
+              {{ isDeleting ? 'Deleting...' : 'Delete' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="dest-card-img">
+          <img *ngIf="dest.imageUrl" [src]="getImageUrl(dest.imageUrl)" [alt]="dest.countryName" />
+          <div *ngIf="!dest.imageUrl" class="dest-card-no-img">
+            <i class="fa-solid fa-flag-checkered"></i>
+          </div>
+        </div>
+
+        <div class="dest-card-body">
+          <div class="dest-card-header">
+            <h3 class="dest-name">{{ dest.countryName }}</h3>
+            <div class="dest-card-actions">
+              <button (click)="showEdit(dest)" class="icon-btn edit-icon" title="Edit">
+                <i class="fa-solid fa-pen"></i>
+              </button>
+              <button (click)="confirmDelete(dest.id!)" class="icon-btn delete-icon" title="Delete">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </div>
+          </div>
+          <p class="dest-desc">{{ dest.description || 'No description' }}</p>
+          <div class="dest-stats">
+            <span *ngIf="dest.teachingLanguages" class="stat-chip">
+              <i class="fa-solid fa-language"></i>
+              {{ dest.teachingLanguages }}
+            </span>
+            <span *ngIf="dest.educationSystem" class="stat-chip">
+              <i class="fa-solid fa-graduation-cap"></i>
+              {{ dest.educationSystem }}
+            </span>
+            <span *ngIf="dest.numberOfUniversities" class="stat-chip">
+              <i class="fa-solid fa-building-columns"></i>
+              {{ dest.numberOfUniversities }} Unis
+            </span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CREATE / EDIT FORM ── -->
+  <div *ngIf="viewMode === 'create' || viewMode === 'edit'" class="dest-form-wrapper">
+    <form class="dest-form" (ngSubmit)="onSave()">
+
+      <!-- Basic Info -->
+      <div class="form-section">
+        <h3 class="form-section-title">
+          <i class="fa-solid fa-location-dot"></i>
+          Basic Information
+        </h3>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">
+              <i class="fa-solid fa-flag"></i>
+              Country Name *
+            </label>
+            <input type="text" name="countryName" [(ngModel)]="form.countryName"
+              placeholder="e.g. France" required class="form-input" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">
+              <i class="fa-solid fa-image"></i>
+              Country Image
+            </label>
+            <div class="image-upload-area">
+              <input type="file" accept="image/*" (change)="onImageSelected($event)"
+                class="file-input" id="dest-image" />
+              <label for="dest-image" class="file-label">
+                <i class="fa-solid fa-camera"></i>
+                <span *ngIf="!imagePreview">Choose image...</span>
+                <img *ngIf="imagePreview" [src]="imagePreview" alt="preview" class="image-preview" />
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">
+            <i class="fa-solid fa-align-left"></i>
+            Short Description (tagline)
+          </label>
+          <input type="text" name="description" [(ngModel)]="form.description"
+            placeholder="e.g. Study in the heart of Europe" class="form-input" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">
+            <i class="fa-solid fa-paragraph"></i>
+            Full Introduction Paragraph
+          </label>
+          <textarea name="paragraph" [(ngModel)]="form.paragraph" rows="4"
+            placeholder="Detailed description about studying in this country..."
+            class="form-input form-textarea"></textarea>
+        </div>
+      </div>
+
+      <!-- Academic Info -->
+      <div class="form-section">
+        <h3 class="form-section-title">
+          <i class="fa-solid fa-graduation-cap"></i>
+          Academic Information
+        </h3>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">
+              <i class="fa-solid fa-language"></i>
+              Teaching Languages
+            </label>
+            <input type="text" name="teachingLanguages" [(ngModel)]="form.teachingLanguages"
+              placeholder="e.g. French, English" class="form-input" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">
+              <i class="fa-solid fa-diagram-project"></i>
+              Education System
+            </label>
+            <input type="text" name="educationSystem" [(ngModel)]="form.educationSystem"
+              placeholder="e.g. LMD (3-5-8), Bachelor/Master/PhD" class="form-input" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">
+              <i class="fa-solid fa-building-columns"></i>
+              Public Universities
+            </label>
+            <p class="form-hint">One per line</p>
+            <textarea name="publicUniversities" [(ngModel)]="form.publicUniversities" rows="5"
+              placeholder="Sorbonne University&#10;University of Paris&#10;Université Lyon 1"
+              class="form-input form-textarea"></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">
+              <i class="fa-solid fa-building"></i>
+              Private Colleges
+            </label>
+            <p class="form-hint">One per line</p>
+            <textarea name="privateColleges" [(ngModel)]="form.privateColleges" rows="5"
+              placeholder="ESSEC Business School&#10;Sciences Po&#10;INSEAD"
+              class="form-input form-textarea"></textarea>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">
+            <i class="fa-solid fa-flask"></i>
+            Specialities / Fields of Study
+          </label>
+          <p class="form-hint">One per line</p>
+          <textarea name="specialities" [(ngModel)]="form.specialities" rows="4"
+            placeholder="Computer Science&#10;Medicine&#10;Engineering&#10;Business & Management"
+            class="form-input form-textarea"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">
+            <i class="fa-solid fa-trophy"></i>
+            Scholarships & Offers
+          </label>
+          <p class="form-hint">One per line</p>
+          <textarea name="offers" [(ngModel)]="form.offers" rows="3"
+            placeholder="Eiffel Excellence Scholarship&#10;Campus France grants&#10;Erasmus+"
+            class="form-input form-textarea"></textarea>
+        </div>
+      </div>
+
+      <!-- Numbers -->
+      <div class="form-section">
+        <h3 class="form-section-title">
+          <i class="fa-solid fa-chart-simple"></i>
+          Key Numbers
+        </h3>
+        <div class="form-row-4">
+          <div class="form-group">
+            <label class="form-label">
+              <i class="fa-solid fa-building-columns"></i>
+              Universities Count
+            </label>
+            <input type="number" name="numberOfUniversities" [(ngModel)]="form.numberOfUniversities"
+              placeholder="e.g. 75" class="form-input" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">
+              <i class="fa-solid fa-user-graduate"></i>
+              Intl. Students
+            </label>
+            <input type="number" name="numberOfStudents" [(ngModel)]="form.numberOfStudents"
+              placeholder="e.g. 342000" class="form-input" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">
+              <i class="fa-solid fa-dollar-sign"></i>
+              Avg. Tuition (USD/yr)
+            </label>
+            <input type="number" name="averageTuitionFee" [(ngModel)]="form.averageTuitionFee"
+              placeholder="e.g. 3000" class="form-input" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">
+              <i class="fa-solid fa-house-chimney"></i>
+              Avg. Living (USD/mo)
+            </label>
+            <input type="number" name="averageLivingCost" [(ngModel)]="form.averageLivingCost"
+              placeholder="e.g. 800" class="form-input" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="form-actions">
+        <button type="button" (click)="showList()" class="cancel-btn">
+          <i class="fa-solid fa-times"></i>
+          Cancel
+        </button>
+        <button type="submit" [disabled]="isSaving" class="primary-btn">
+          <i *ngIf="!isSaving && viewMode === 'create'" class="fa-solid fa-plus"></i>
+          <i *ngIf="!isSaving && viewMode === 'edit'" class="fa-solid fa-save"></i>
+          <i *ngIf="isSaving" class="fa-solid fa-spinner fa-spin"></i>
+          {{ isSaving ? 'Saving...' : viewMode === 'create' ? 'Create Destination' : 'Save Changes' }}
+        </button>
+      </div>
+
+    </form>
+  </div>
+
+</div>

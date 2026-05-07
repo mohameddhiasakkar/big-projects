@@ -1,0 +1,246 @@
+<div class="stats-admin">
+  <header class="stats-hero">
+    <p class="stats-kicker">Admin · Analyses</p>
+    <h1>Statistiques de la plateforme</h1>
+    <p class="stats-lede">Répartition des utilisateurs et progression du parcours étudiant. Les données reflètent les comptes avec le rôle <strong>ÉTUDIANT</strong> pour les mesures de progression.</p>
+  </header>
+
+  <p class="msg error" *ngIf="errorMsg" role="alert">{{ errorMsg }}</p>
+
+  <div *ngIf="loading" class="loading-state" aria-busy="true">
+    <div class="loading-spinner"></div>
+    <span>Chargement des analyses…</span>
+  </div>
+
+  <ng-container *ngIf="!loading && stats">
+    <section class="kpi-section" aria-label="User counts">
+      <div class="kpi-section-head">
+        <h2 class="section-title">Utilisateurs</h2>
+        <span class="section-meta">{{ stats.users.total }} au total</span>
+      </div>
+      <div class="card-grid">
+        <article class="stat-card stat-card--primary">
+          <span class="stat-icon" aria-hidden="true"><i class="fas fa-users"></i></span>
+          <span class="stat-label">Total des utilisateurs</span>
+          <span class="stat-value">{{ stats.users.total }}</span>
+        </article>
+        <article class="stat-card stat-card--students">
+          <span class="stat-icon" aria-hidden="true"><i class="fas fa-user-graduate"></i></span>
+          <span class="stat-label">Étudiants</span>
+          <span class="stat-value">{{ stats.users.students }}</span>
+        </article>
+        <article class="stat-card stat-card--agents">
+          <span class="stat-icon" aria-hidden="true"><i class="fas fa-headset"></i></span>
+          <span class="stat-label">Agents</span>
+          <span class="stat-value">{{ stats.users.agents }}</span>
+        </article>
+        <article class="stat-card stat-card--neutral">
+          <span class="stat-icon" aria-hidden="true"><i class="fas fa-shield-halved"></i></span>
+          <span class="stat-label">Administrateurs</span>
+          <span class="stat-value">{{ stats.users.admins }}</span>
+        </article>
+        <article class="stat-card stat-card--neutral">
+          <span class="stat-icon" aria-hidden="true"><i class="fas fa-chalkboard-user"></i></span>
+          <span class="stat-label">Enseignants de langues</span>
+          <span class="stat-value">{{ stats.users.languageTeachers }}</span>
+        </article>
+        <article class="stat-card stat-card--neutral">
+          <span class="stat-icon" aria-hidden="true"><i class="fas fa-user-tag"></i></span>
+          <span class="stat-label">Invités</span>
+          <span class="stat-value">{{ stats.users.guests }}</span>
+        </article>
+        <article class="stat-card stat-card--neutral">
+          <span class="stat-icon" aria-hidden="true"><i class="fas fa-id-card"></i></span>
+          <span class="stat-label">Utilisateurs (rôle)</span>
+          <span class="stat-value">{{ stats.users.users }}</span>
+        </article>
+      </div>
+    </section>
+
+    <section class="insights-section" aria-label="Charts and distributions">
+      <div class="insights-head">
+        <h2 class="section-title">Aperçus</h2>
+        <p class="section-sub">Répartition visuelle des rôles et concentration des étudiants dans le pipeline.</p>
+      </div>
+
+      <div class="diagrams-grid">
+        <article class="diagram-card diagram-card--donut">
+          <div class="diagram-card-head">
+            <span class="diagram-icon" aria-hidden="true"><i class="fas fa-chart-pie"></i></span>
+            <div>
+              <h3 class="diagram-title">Répartition des rôles</h3>
+              <p class="diagram-sub">Composition de tous les comptes enregistrés.</p>
+            </div>
+          </div>
+          <div class="donut-panel">
+            <div class="donut-visual" aria-hidden="true">
+              <div class="donut-glow"></div>
+              <div class="donut-wrap">
+                <div class="donut-ring" [ngStyle]="userMixDonutStyle()"></div>
+                <div class="donut-center">
+                  <span class="donut-big">{{ stats.users.students }}</span>
+                  <span class="donut-sub">Étudiants</span>
+                  <span class="donut-pct" *ngIf="stats.users.total > 0">{{ pctOfTotal(stats.users.students) }}% du total</span>
+                </div>
+              </div>
+            </div>
+            <ul class="donut-legend">
+              <li>
+                <span class="swatch students"></span>
+                <div class="legend-text">
+                  <span class="legend-label">Étudiants</span>
+                  <span class="legend-value">{{ stats.users.students }} <span class="legend-pct" *ngIf="stats.users.total">· {{ pctOfTotal(stats.users.students) }}%</span></span>
+                </div>
+              </li>
+              <li>
+                <span class="swatch agents"></span>
+                <div class="legend-text">
+                  <span class="legend-label">Agents</span>
+                  <span class="legend-value">{{ stats.users.agents }} <span class="legend-pct" *ngIf="stats.users.total">· {{ pctOfTotal(stats.users.agents) }}%</span></span>
+                </div>
+              </li>
+              <li>
+                <span class="swatch other"></span>
+                <div class="legend-text">
+                  <span class="legend-label">Tous les autres rôles</span>
+                  <span class="legend-value">{{ otherUserCount() }} <span class="legend-pct" *ngIf="stats.users.total">· {{ pctOfTotal(otherUserCount()) }}%</span></span>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="diagram-card diagram-card--chart">
+          <div class="diagram-card-head">
+            <span class="diagram-icon diagram-icon--amber" aria-hidden="true"><i class="fas fa-spinner"></i></span>
+            <div>
+              <h3 class="diagram-title">En cours par étape</h3>
+              <p class="diagram-sub">Volume relatif du travail actif par étape du pipeline (mis à l'échelle par rapport au maximum).</p>
+            </div>
+          </div>
+          <div class="chart-legend-inline" aria-hidden="true">
+            <span class="pill pill--amber">En cours</span>
+          </div>
+          <p class="diagram-callout diagram-callout--amber" *ngIf="peakInProgressStage() as peak">
+            <i class="fas fa-location-dot"></i>
+            <span><strong>Focus :</strong> {{ stageLabel(peak) }} — <span class="tabular">{{ peak.inProgress }}</span> en cours</span>
+          </p>
+          <div class="hbar-chart" role="list">
+            <div class="hbar-row" *ngFor="let row of stats.studentProgressByStage" role="listitem" [class.hbar-row--peak]="isPeakInProgress(row)">
+              <span class="hbar-label" [title]="stageLabel(row)">{{ stageShortLabel(row) }}</span>
+              <div class="hbar-track-wrap">
+                <div class="hbar-track">
+                  <div class="hbar-fill in-progress" [style.width.%]="barPct(row.inProgress)"></div>
+                </div>
+              </div>
+              <span class="hbar-count tabular">{{ row.inProgress }}</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="diagram-card diagram-card--chart">
+          <div class="diagram-card-head">
+            <span class="diagram-icon diagram-icon--slate" aria-hidden="true"><i class="fas fa-hourglass-start"></i></span>
+            <div>
+              <h3 class="diagram-title">Non commencé par étape</h3>
+              <p class="diagram-sub">Arriéré avant le début du travail — utile pour repérer les goulots d'étranglement et les abandons.</p>
+            </div>
+          </div>
+          <div class="chart-legend-inline" aria-hidden="true">
+            <span class="pill pill--slate">Non commencé</span>
+          </div>
+          <p class="diagram-callout diagram-callout--slate" *ngIf="peakNotStartedStage() as peakNs">
+            <i class="fas fa-pause-circle"></i>
+            <span><strong>Arriéré :</strong> {{ stageLabel(peakNs) }} — <span class="tabular">{{ peakNs.notStarted }}</span> non commencé</span>
+          </p>
+          <div class="hbar-chart" role="list">
+            <div class="hbar-row" *ngFor="let row of stats.studentProgressByStage" role="listitem" [class.hbar-row--peak]="isPeakNotStarted(row)">
+              <span class="hbar-label" [title]="stageLabel(row)">{{ stageShortLabel(row) }}</span>
+              <div class="hbar-track-wrap">
+                <div class="hbar-track">
+                  <div class="hbar-fill not-started" [style.width.%]="barPct(row.notStarted)"></div>
+                </div>
+              </div>
+              <span class="hbar-count tabular">{{ row.notStarted }}</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="diagram-card diagram-card--flow">
+          <div class="diagram-card-head">
+            <span class="diagram-icon diagram-icon--multi" aria-hidden="true"><i class="fas fa-bars-staggered"></i></span>
+            <div>
+              <h3 class="diagram-title">Mélange de statuts par étape</h3>
+              <p class="diagram-sub">Chaque ligne représente une étape. Les segments totalisent 100 % des enregistrements à cette étape.</p>
+            </div>
+          </div>
+          <div class="chart-legend-inline chart-legend-inline--multi" aria-hidden="true">
+            <span class="pill pill--slate">Non commencé</span>
+            <span class="pill pill--amber">En cours</span>
+            <span class="pill pill--green">Terminé</span>
+          </div>
+          <div class="stacked-list">
+            <div class="stacked-item" *ngFor="let row of stats.studentProgressByStage">
+              <div class="stacked-head">
+                <span class="stacked-title">{{ stageLabel(row) }}</span>
+                <span class="stacked-total tabular" *ngIf="rowTotal(row) > 0">{{ rowTotal(row) }} enregistrements</span>
+              </div>
+              <div class="stacked-track" *ngIf="rowTotal(row) > 0; else emptyStage">
+                <div
+                  class="stacked-seg not-started"
+                  [style.width.%]="stackedSegmentPct(row, 'notStarted')"
+                  [title]="'Non commencé : ' + row.notStarted"></div>
+                <div
+                  class="stacked-seg in-progress"
+                  [style.width.%]="stackedSegmentPct(row, 'inProgress')"
+                  [title]="'En cours : ' + row.inProgress"></div>
+                <div
+                  class="stacked-seg completed"
+                  [style.width.%]="stackedSegmentPct(row, 'completed')"
+                  [title]="'Terminé : ' + row.completed"></div>
+              </div>
+              <ng-template #emptyStage><div class="stacked-empty">Aucun enregistrement pour cette étape</div></ng-template>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="progress-section">
+      <div class="progress-section-head">
+        <h2 class="section-title">Progression détaillée</h2>
+        <p class="section-sub">Vue tabulaire avec barres de répartition compactes.</p>
+      </div>
+
+      <div class="table-wrap">
+        <table class="progress-table">
+          <thead>
+            <tr>
+              <th scope="col">Étape</th>
+              <th scope="col" class="th-diagram">Répartition</th>
+              <th scope="col" class="th-num">Non commencé</th>
+              <th scope="col" class="th-num">En cours</th>
+              <th scope="col" class="th-num">Terminé</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of stats.studentProgressByStage">
+              <td class="stage-cell">{{ stageLabel(row) }}</td>
+              <td class="diagram-cell">
+                <div class="mini-stack" *ngIf="rowTotal(row) > 0" [title]="'Non commencé : ' + row.notStarted + ', En cours : ' + row.inProgress + ', Terminé : ' + row.completed">
+                  <div class="mini-seg not-started" [style.width.%]="stackedSegmentPct(row, 'notStarted')"></div>
+                  <div class="mini-seg in-progress" [style.width.%]="stackedSegmentPct(row, 'inProgress')"></div>
+                  <div class="mini-seg completed" [style.width.%]="stackedSegmentPct(row, 'completed')"></div>
+                </div>
+                <span *ngIf="rowTotal(row) === 0" class="muted-zero">—</span>
+              </td>
+              <td class="td-num tabular">{{ row.notStarted }}</td>
+              <td class="td-num tabular">{{ row.inProgress }}</td>
+              <td class="td-num tabular">{{ row.completed }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </ng-container>
+</div>

@@ -1,0 +1,45 @@
+<div class="quiz-admin">
+  <div class="admin-hero">
+    <div>
+      <span class="hero-kicker">Outils d'administration</span>
+      <h2>Gestion des quiz</h2>
+      <p>Rechercher, consulter, modifier et supprimer des quiz de langue.</p>
+    </div>
+    <div class="hero-pill">{{ filteredQuizzes.length }} visible(s)</div>
+  </div>
+  <div class="toolbar">
+    <input type="text" [(ngModel)]="searchTerm" placeholder="Rechercher par titre, description, langue..." />
+    <select [(ngModel)]="selectedLanguage">
+      <option *ngFor="let lang of languageOptions" [value]="lang">{{ lang }}</option>
+    </select>
+  </div>
+  <p class="msg success" *ngIf="successMsg">{{ successMsg }}</p>
+  <p class="msg error" *ngIf="errorMsg">{{ errorMsg }}</p>
+  <p *ngIf="loading">Chargement des quiz...</p>
+
+  <div class="quiz-row" *ngFor="let quiz of filteredQuizzes">
+    <ng-container *ngIf="editingQuizId !== quiz.id; else editMode">
+      <div>
+        <h3>{{ quiz.title }}</h3>
+        <p>{{ quiz.description }}</p>
+        <small>Langue : {{ quiz.language || 'N/A' }}</small>
+      </div>
+      <div class="actions">
+        <button (click)="startEdit(quiz)">Modifier</button>
+        <button class="danger" (click)="deleteQuiz(quiz.id)">Supprimer</button>
+      </div>
+    </ng-container>
+
+    <ng-template #editMode>
+      <div class="edit-grid">
+        <input [(ngModel)]="editForm.title" placeholder="Titre" />
+        <input [(ngModel)]="editForm.language" placeholder="Langue" />
+        <textarea [(ngModel)]="editForm.description" placeholder="Description"></textarea>
+      </div>
+      <div class="actions">
+        <button (click)="saveEdit(quiz.id)">Enregistrer</button>
+        <button (click)="cancelEdit()">Annuler</button>
+      </div>
+    </ng-template>
+  </div>
+</div>

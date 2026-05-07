@@ -1,0 +1,120 @@
+<div class="agent-layout">
+  <!-- ── MAIN CONTENT ── -->
+  <main class="agent-main">
+    <div class="ml-model-container" style="max-width: 1300px; margin: 0 auto; padding: 20px;">
+      <div style="display: flex; flex-direction: row; flex-wrap: wrap; gap: 2rem; align-items: flex-start;">
+        
+        <!-- ── LEFT COLUMN: FORM ── -->
+        <div class="card" style="flex: 1; min-width: 400px; margin: 0;">
+          <h2>Prédicteur de chances d'admission</h2>
+          <p class="hint">Saisissez les données de l'étudiant pour prédire ses chances d'admission à un programme d'études à l'étranger.</p>
+
+          <form (ngSubmit)="onSubmit()" #mlForm="ngForm">
+            <!-- Relation with existing students -->
+            <div class="form-group">
+              <label for="studentSelect">Étudiant concerné (Optionnel)</label>
+              <select id="studentSelect" name="studentSelect" [(ngModel)]="selectedStudentId" (change)="onStudentChange()" class="form-input" style="width: 100%; background: transparent; border: 1.5px solid var(--border); border-radius: var(--radius); color: #ffffff; padding: 11px;">
+                <option [ngValue]="null">Saisie manuelle / Autre</option>
+                <option *ngFor="let s of students" [ngValue]="s.id">{{ s.firstName }} {{ s.lastName }}</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="country">Pays</label>
+              <select id="country" name="country" [(ngModel)]="predictionForm.country" class="form-input" required style="width: 100%; background: transparent; border: 1.5px solid var(--border); border-radius: var(--radius); color: #ffffff; padding: 11px;">
+                <option value="" disabled>Choisir un pays...</option>
+                <option *ngFor="let c of countries" [value]="c">{{ c }}</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="major">Spécialité</label>
+              <select id="major" name="major" [(ngModel)]="predictionForm.major" class="form-input" required style="width: 100%; background: transparent; border: 1.5px solid var(--border); border-radius: var(--radius); color: #ffffff; padding: 11px;">
+                <option value="" disabled>Choisir une spécialité...</option>
+                <option *ngFor="let m of majors" [value]="m">{{ m }}</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="language">Langue</label>
+              <select id="language" name="language" [(ngModel)]="predictionForm.language" class="form-input" required style="width: 100%; background: transparent; border: 1.5px solid var(--border); border-radius: var(--radius); color: #ffffff; padding: 11px;">
+                <option value="" disabled>Choisir une langue...</option>
+                <option *ngFor="let l of languagesList" [value]="l">{{ l }}</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="moyenne">Moyenne (Score académique sur 20)</label>
+              <select id="moyenne" name="moyenne" [(ngModel)]="predictionForm.moyenne" class="form-input" required style="width: 100%; background: transparent; border: 1.5px solid var(--border); border-radius: var(--radius); color: #ffffff; padding: 11px;">
+                <option [ngValue]="null" disabled>Choisir une moyenne...</option>
+                <option *ngFor="let m of moyennesList" [ngValue]="m">{{ m }}</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="tuitionTier">Niveau de frais (1-3)</label>
+              <select id="tuitionTier" name="tuitionTier" [(ngModel)]="predictionForm.tuitionTier" class="form-input" required style="width: 100%; background: transparent; border: 1.5px solid var(--border); border-radius: var(--radius); color: #ffffff; padding: 11px;">
+                <option [ngValue]="null" disabled>Choisir un niveau...</option>
+                <option *ngFor="let t of tuitionTiersList" [ngValue]="t">{{ t }}</option>
+              </select>
+            </div>
+
+            <div class="actions-row">
+              <button type="submit" class="primary" [disabled]="isLoading || !mlForm.valid">
+                <span *ngIf="isLoading" class="spinner-small"></span>
+                {{ isLoading ? 'Prédiction en cours...' : 'Obtenir la prédiction' }}
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- ── RIGHT COLUMN: RESULTS ── -->
+        <div style="flex: 2; min-width: 500px; display: flex; flex-direction: column; gap: 1.5rem;">
+          
+          <!-- Prediction and Error Messages -->
+          <div *ngIf="predictionResult || error" class="card" style="margin: 0; padding: 1.5rem;">
+            <h3 style="color: #fff; margin-bottom: 1rem; font-size: 1.2rem;">Résultat de la prédiction</h3>
+            <div *ngIf="error" class="msg error" style="margin-top: 0;">
+              <i class="fas fa-exclamation-circle"></i> {{ error }}
+            </div>
+            <div *ngIf="predictionResult" class="msg success" style="margin-top: 0; background: rgba(251,191,36,0.1); border: 1.5px solid rgba(251,191,36,0.3); color: #fbbf24;">
+              <i class="fas fa-check-circle"></i> {{ predictionResult }}
+            </div>
+          </div>
+
+          <!-- Recommendations Section -->
+          <div *ngIf="recommendations.length > 0" class="recommendations-container">
+            <h3 style="color: #fff; margin-bottom: 1.5rem; font-size: 1.2rem; border-bottom: 1px solid rgba(251,191,36,0.2); padding-bottom: 0.5rem;">
+              <i class="fa-solid fa-star" style="color: #fbbf24;"></i> Meilleures Recommandations
+            </h3>
+            <div class="recommendation-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem;">
+              <div *ngFor="let rec of recommendations" class="recommendation-card" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(251,191,36,0.2); border-radius: 16px; padding: 1.5rem; transition: transform 0.2s; position: relative; overflow: hidden;">
+                <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+                  <i class="fa-solid fa-building-columns" style="color: #fbbf24; font-size: 1.2rem;"></i>
+                  <h4 style="margin: 0; font-size: 1.1rem; color: #fff; line-height: 1.3;">{{ rec.institution }}</h4>
+                </div>
+                
+                <div style="font-size: 0.9rem; color: #94a3b8; display: flex; flex-direction: column; gap: 0.6rem;">
+                  <span><i class="fa-solid fa-location-dot" style="width: 20px; color: #fbbf24;"></i> {{ rec.country }}</span>
+                  <span><i class="fa-solid fa-graduation-cap" style="width: 20px; color: #fbbf24;"></i> {{ rec.major }}</span>
+                  <span><i class="fa-solid fa-language" style="width: 20px; color: #fbbf24;"></i> {{ rec.language }}</span>
+                  
+                  <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
+                    <span style="background: rgba(251,191,36,0.1); color: #fbbf24; padding: 4px 12px; border-radius: 20px; font-weight: 700; font-size: 0.85rem;">Correspondance : {{ (rec.similarity * 100).toFixed(1) }}%</span>
+                    <span style="font-size: 0.75rem; color: #64748b;">Moyenne : {{ rec.moyenne }}/20</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Placeholder if no data -->
+          <div *ngIf="!predictionResult && !error && !isLoading" class="card" style="margin: 0; padding: 3rem; text-align: center; border-style: dashed; border-color: rgba(255,255,255,0.1); flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            <i class="fa-solid fa-wand-magic-sparkles" style="font-size: 3rem; color: rgba(251,191,36,0.3); margin-bottom: 1.5rem;"></i>
+            <p style="color: #94a3b8; font-size: 1rem; max-width: 300px;">Prêt à analyser ? Saisissez les données et obtenez des recommandations intelligentes.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+</div>

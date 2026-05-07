@@ -1,0 +1,74 @@
+version: "3.9"
+
+services:
+
+  postgres:
+    image: postgres:15
+    container_name: linkedu_postgres
+    environment:
+      POSTGRES_DB: linkedu_db
+      POSTGRES_USER: linkedu_user
+      POSTGRES_PASSWORD: your_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    # ✅ IMPORTANT: wait until DB is ready
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U linkedu_user -d linkedu_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    container_name: linkedu_backend
+
+    # ✅ wait for postgres to be READY (not just started)
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/linkedu_db
+      SPRING_DATASOURCE_USERNAME: linkedu_user
+      SPRING_DATASOURCE_PASSWORD: your_password
+
+      FRONTEND_URL: http://localhost:4200
+
+      EMAIL_APP_PASSWORD: "test_pass"
+      GROQ_API_KEY: "test_key"
+      GROQ_CHATBOT_API_KEY: "test_key"
+
+    ports:
+      - "8080:8080"
+
+    volumes:
+      - uploads_data:/app/uploads
+
+    restart: always   # ✅ if fails, restart automatically
+
+  frontend:
+    build: ./frontend
+    container_name: linkedu_frontend
+
+    depends_on:
+      - backend
+
+    ports:
+      - "4200:80"
+
+  ml-service:
+    build: ./ml-model
+    container_name: linkedu_ml
+
+    ports:
+      - "8000:8000"
+
+    restart: always
+
+
+volumes:
+  postgres_data:
+  uploads_data:

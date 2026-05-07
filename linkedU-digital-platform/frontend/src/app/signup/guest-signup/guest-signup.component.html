@@ -1,0 +1,123 @@
+<div class="blur-bg-overlay"></div>
+
+<div class="form-popup">
+  <div class="form-box">
+
+    <!-- LEFT: Image panel -->
+    <div class="form-details">
+      <div class="register-image"></div>
+      <div class="panel-overlay">
+        <h2>Rejoignez LinkedU</h2>
+        <p>Commencez votre voyage d'études à l'étranger avec nous.</p>
+      </div>
+    </div>
+
+    <!-- RIGHT: Form -->
+    <div class="form-content">
+
+      <!-- LOGO -->
+      <div class="logo-container">
+        <img src="/pics/logo.png" alt="LinkedU Logo" />
+      </div>
+
+      <!-- TABS -->
+      <div class="tab-switcher">
+        <a routerLink="/signup/guest" class="tab-btn active">
+          <i class="fa-solid fa-globe"></i>
+          Inscription Invité
+        </a>
+        <a routerLink="/signup/contract" class="tab-btn">
+          <i class="fa-solid fa-file-contract"></i>
+          Inscription par Contrat
+        </a>
+      </div>
+
+      <p class="tab-description">
+        <i class="fa-solid fa-info-circle"></i>
+        Inscrivez-vous en tant qu'invité pour explorer notre plateforme.
+      </p>
+
+      <form (ngSubmit)="onSubmit()">
+
+        <div class="input-icon-wrapper">
+          <i class="fa-solid fa-user input-icon"></i>
+          <input class="form-input" name="username" [(ngModel)]="form.username" placeholder="Nom d'utilisateur *" required />
+        </div>
+
+        <div class="form-row">
+          <div class="input-icon-wrapper">
+            <i class="fa-solid fa-user-pen input-icon"></i>
+            <input class="form-input" name="firstName" [(ngModel)]="form.firstName" placeholder="Prénom *" required />
+          </div>
+          <div class="input-icon-wrapper">
+            <i class="fa-solid fa-user-pen input-icon"></i>
+            <input class="form-input" name="lastName" [(ngModel)]="form.lastName" placeholder="Nom *" required />
+          </div>
+        </div>
+
+        <div class="input-icon-wrapper">
+          <i class="fa-solid fa-envelope input-icon"></i>
+          <input class="form-input" name="email" type="email" [(ngModel)]="form.email" placeholder="Adresse e-mail *" required />
+        </div>
+
+        <div class="form-row">
+          <div class="input-icon-wrapper">
+            <i class="fa-solid fa-phone input-icon"></i>
+            <input class="form-input" name="phoneNumber" [(ngModel)]="form.phoneNumber" placeholder="Téléphone *" required />
+          </div>
+          <div class="input-icon-wrapper">
+            <i class="fa-solid fa-calendar input-icon"></i>
+            <input class="form-input" name="birthDate" type="date" [(ngModel)]="form.birthDate" required />
+          </div>
+        </div>
+
+        <div class="input-icon-wrapper">
+          <i class="fa-solid fa-location-dot input-icon"></i>
+          <input class="form-input" name="address" [(ngModel)]="form.address" placeholder="Adresse (optionnelle)" />
+        </div>
+
+        <div class="input-icon-wrapper">
+          <i class="fa-solid fa-lock input-icon"></i>
+          <input class="form-input" name="password" type="password" [(ngModel)]="form.password" placeholder="Mot de passe *" required />
+        </div>
+
+        <div *ngIf="form.password.length > 0" class="strength-bar">
+          <div class="strength-fill" [ngClass]="{'weak': passwordStrength==='Faible','medium': passwordStrength==='Moyen','strong': passwordStrength==='Fort'}"></div>
+        </div>
+        <p *ngIf="form.password.length > 0" class="password-strength">
+          <i class="fa-solid fa-shield-halved"></i> {{ passwordStrength }}
+        </p>
+
+        <div class="input-icon-wrapper">
+          <i class="fa-solid fa-lock input-icon"></i>
+          <input class="form-input" name="confirmPassword" type="password" [(ngModel)]="form.confirmPassword" placeholder="Confirmez le mot de passe *" required />
+        </div>
+
+        <p *ngIf="form.confirmPassword && !passwordsMatch" class="error-message">
+          <i class="fa-solid fa-circle-exclamation"></i>
+          Les mots de passe ne correspondent pas
+        </p>
+
+        <div *ngIf="errorMessage" class="error-message">
+          <i class="fa-solid fa-circle-exclamation"></i> {{ errorMessage }}
+        </div>
+        <div *ngIf="successMessage" class="success-message">
+          <i class="fa-solid fa-circle-check"></i> {{ successMessage }}
+        </div>
+
+        <button type="submit" class="submit-btn" [disabled]="isSubmitting || !passwordsMatch">
+          <i *ngIf="!isSubmitting" class="fa-solid fa-user-plus"></i>
+          <i *ngIf="isSubmitting" class="fa-solid fa-spinner fa-spin"></i>
+          {{ isSubmitting ? 'Inscription en cours...' : 'Créer un compte invité' }}
+        </button>
+
+      </form>
+
+      <div class="bottom-link">
+        Vous avez déjà un compte ?
+        <a routerLink="/login"><i class="fa-solid fa-sign-in-alt"></i> Se connecter</a>
+      </div>
+
+    </div>
+  </div>
+</div>

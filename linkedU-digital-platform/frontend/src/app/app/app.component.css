@@ -1,0 +1,17 @@
+/* Add to your global styles to fix navbar spacing */
+body {
+  margin: 0;
+  padding: 0;
+}
+
+/* Since navbar is sticky, we don't need extra padding */
+main, .main-content {
+  padding-top: 0;
+}
+
+/* The navbar itself handles its own spacing */
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}

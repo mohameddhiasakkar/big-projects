@@ -1,0 +1,38 @@
+<div class="admin-layout">
+  <!-- Sidebar -->
+  <aside class="admin-sidebar">
+    <div class="sidebar-brand">
+      <h1>LinkedU</h1>
+      <span>Panneau d'administration</span>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a routerLink="statistics" routerLinkActive="active">
+        <i class="fas fa-chart-pie"></i> Statistiques
+      </a>
+      <a routerLink="product-keys" routerLinkActive="active">
+        <i class="fas fa-key"></i> Clés de produit
+      </a>
+      <a routerLink="users" routerLinkActive="active">
+        <i class="fas fa-users"></i> Utilisateurs
+      </a>
+      <a routerLink="destinations" routerLinkActive="active">
+        <i class="fas fa-globe"></i> Destinations
+      </a>
+      <a routerLink="quizzes" routerLinkActive="active">
+        <i class="fas fa-question-circle"></i> Quiz
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button (click)="logout()">
+        <i class="fas fa-sign-out-alt"></i> Déconnexion
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="admin-main">
+    <router-outlet></router-outlet>
+  </main>
+</div>

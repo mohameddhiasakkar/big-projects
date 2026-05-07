@@ -1,0 +1,213 @@
+<!-- Loading -->
+<div *ngIf="isLoading" class="country-loading">
+  <div class="loading-spinner"></div>
+  <p>
+    <i class="fa-solid fa-spinner fa-spin"></i>
+    Chargement de la destination...
+  </p>
+</div>
+
+<!-- Error -->
+<div *ngIf="!isLoading && errorMessage" class="country-error">
+  <div class="error-icon">
+    <i class="fa-solid fa-globe"></i>
+  </div>
+  <h2>{{ errorMessage }}</h2>
+  <a routerLink="/destinations" class="back-link">
+    <i class="fa-solid fa-arrow-left"></i>
+    Retour aux Destinations
+  </a>
+</div>
+
+<!-- Content -->
+<div *ngIf="!isLoading && destination" class="country-page">
+
+  <!-- ── HERO ── -->
+  <section class="country-hero"
+           [style.background-image]="'url(' + getImageUrl(destination.imageUrl) + ')'">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <a routerLink="/destinations" class="hero-back">
+        <i class="fa-solid fa-arrow-left"></i>
+        Toutes les Destinations
+      </a>
+      <h1>{{ destination.countryName | uppercase }}</h1>
+      <p *ngIf="destination.description" class="hero-tagline">{{ destination.description }}</p>
+    </div>
+  </section>
+
+  <!-- ── MAIN CONTENT ── -->
+  <section class="country-content">
+
+    <!-- Row 1: About Card + Image Card -->
+    <div class="content-row row-2-cols">
+      <!-- About Card -->
+      <div *ngIf="destination.paragraph" class="content-card intro-card">
+        <h2 class="card-title">
+          <i class="fa-solid fa-book-open"></i>
+          Étudier en {{ destination.countryName }}
+        </h2>
+        <p class="intro-text">{{ destination.paragraph }}</p>
+      </div>
+
+      <!-- Image Card -->
+      <div class="content-card image-card">
+        <div class="country-image-container">
+          <img *ngIf="getImageUrl(destination.imageUrl)"
+               [src]="getImageUrl(destination.imageUrl)"
+               [alt]="destination.countryName"
+               class="country-detail-image" />
+          <div *ngIf="!getImageUrl(destination.imageUrl)" class="image-placeholder">
+            <i class="fa-solid fa-landmark"></i>
+            <p>Image non disponible</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 2: Teaching Languages + Fields of Study -->
+    <div class="content-row row-2-cols">
+      <!-- Teaching Languages -->
+      <div *ngIf="destination.teachingLanguages" class="content-card languages-card">
+        <h2 class="card-title">
+          <i class="fa-solid fa-language"></i>
+          Langues d'Enseignement
+        </h2>
+        <div class="languages-display">
+          <i class="fa-solid fa-chalkboard-user"></i>
+          <p>{{ destination.teachingLanguages }}</p>
+        </div>
+      </div>
+
+      <!-- Specialities / Fields of Study -->
+      <div *ngIf="splitLines(destination.specialities).length > 0" class="content-card">
+        <h2 class="card-title">
+          <i class="fa-solid fa-flask"></i>
+          Filières d'Étude
+        </h2>
+        <div class="chips-grid">
+          <span *ngFor="let spec of splitLines(destination.specialities)" class="spec-chip">
+            {{ spec }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 3: Education System + Scholarships & Offers -->
+    <div class="content-row row-2-cols">
+      <!-- Education System -->
+      <div *ngIf="destination.educationSystem" class="content-card system-card">
+        <h2 class="card-title">
+          <i class="fa-solid fa-graduation-cap"></i>
+          Système Éducatif
+        </h2>
+        <div class="system-display">
+          <i class="fa-solid fa-diagram-project"></i>
+          <p>{{ destination.educationSystem }}</p>
+        </div>
+      </div>
+
+      <!-- Offers / Scholarships -->
+      <div *ngIf="splitLines(destination.offers).length > 0" class="content-card offers-card">
+        <h2 class="card-title">
+          <i class="fa-solid fa-trophy"></i>
+          Bourses & Offres
+        </h2>
+        <ul class="info-list">
+          <li *ngFor="let offer of splitLines(destination.offers)">
+            <i class="fa-solid fa-star list-icon star-icon"></i>
+            {{ offer }}
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Row 4: Public Universities + Private Colleges -->
+    <div class="content-row row-2-cols">
+      <!-- Public Universities -->
+      <div *ngIf="splitLines(destination.publicUniversities).length > 0" class="content-card">
+        <h2 class="card-title">
+          <i class="fa-solid fa-building-columns"></i>
+          Universités Publiques
+        </h2>
+        <ul class="info-list">
+          <li *ngFor="let uni of splitLines(destination.publicUniversities)">
+            <i class="fa-solid fa-circle-check list-icon blue-icon"></i>
+            {{ uni }}
+          </li>
+        </ul>
+      </div>
+
+      <!-- Private Colleges -->
+      <div *ngIf="splitLines(destination.privateColleges).length > 0" class="content-card">
+        <h2 class="card-title">
+          <i class="fa-solid fa-building"></i>
+          Établissements Privés
+        </h2>
+        <ul class="info-list">
+          <li *ngFor="let col of splitLines(destination.privateColleges)">
+            <i class="fa-solid fa-circle-check list-icon yellow-icon"></i>
+            {{ col }}
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Row 5: Key Numbers -->
+    <div *ngIf="destination.numberOfUniversities || destination.numberOfStudents || destination.averageTuitionFee || destination.averageLivingCost"
+         class="numbers-section">
+      <h2 class="section-title">
+        <i class="fa-solid fa-chart-simple"></i>
+        Chiffres Clés
+      </h2>
+      <div class="numbers-grid">
+        <div *ngIf="destination.numberOfUniversities" class="number-card">
+          <div class="number-icon">
+            <i class="fa-solid fa-building-columns"></i>
+          </div>
+          <div class="number-value">{{ formatNumber(destination.numberOfUniversities) }}</div>
+          <div class="number-label">Universités</div>
+        </div>
+        <div *ngIf="destination.numberOfStudents" class="number-card">
+          <div class="number-icon">
+            <i class="fa-solid fa-user-graduate"></i>
+          </div>
+          <div class="number-value">{{ formatNumber(destination.numberOfStudents) }}</div>
+          <div class="number-label">Étudiants Étrangers</div>
+        </div>
+        <div *ngIf="destination.averageTuitionFee" class="number-card">
+          <div class="number-icon">
+            <i class="fa-solid fa-dollar-sign"></i>
+          </div>
+          <div class="number-value">${{ formatNumber(destination.averageTuitionFee) }}</div>
+          <div class="number-label">Frais Scolaires/An</div>
+        </div>
+        <div *ngIf="destination.averageLivingCost" class="number-card">
+          <div class="number-icon">
+            <i class="fa-solid fa-house-chimney"></i>
+          </div>
+          <div class="number-value">${{ formatNumber(destination.averageLivingCost) }}</div>
+          <div class="number-label">Coût de Vie/Mois</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="cta-section">
+      <h2>Prêt à étudier en {{ destination.countryName }} ?</h2>
+      <p>Créez un compte et connectez-vous avec un agent qui vous guidera tout au long du processus.</p>
+      <div class="cta-buttons">
+        <a routerLink="/signup/guest" class="cta-btn cta-primary">
+          <i class="fa-solid fa-rocket"></i>
+          Commencer
+        </a>
+        <a routerLink="/destinations" class="cta-btn cta-secondary">
+          <i class="fa-solid fa-arrow-left"></i>
+          Autres Destinations
+        </a>
+      </div>
+    </div>
+
+  </section>
+
+</div>

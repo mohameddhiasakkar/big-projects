@@ -1,0 +1,207 @@
+<div class="users-container">
+  <!-- Header -->
+  <div class="users-header">
+    <h2>
+      <i class="fas fa-users"></i> Gestion des utilisateurs
+    </h2>
+    <p>Voir tous les utilisateurs, attribuer des rôles et lier les agents aux étudiants.</p>
+  </div>
+
+  <!-- Feedback -->
+  <p class="msg-success" *ngIf="successMsg">{{ successMsg }}</p>
+  <p class="msg-error" *ngIf="errorMsg">{{ errorMsg }}</p>
+  <p *ngIf="loading" class="loading-msg">Chargement des utilisateurs...</p>
+
+  <!-- All Users Table -->
+  <div class="users-card" *ngIf="!loading">
+    <div class="card-header">
+      <h3>Tous les utilisateurs ({{ users.length }})</h3>
+      <button class="btn-refresh" (click)="loadUsers()" title="Actualiser">
+        <i class="fas fa-sync-alt"></i>
+      </button>
+    </div>
+
+    <div class="table-container">
+      <table *ngIf="users.length > 0">
+        <thead>
+          <tr>
+            <th><i class="fas fa-user"></i> Nom</th>
+            <th><i class="fas fa-envelope"></i> Email</th>
+            <th><i class="fas fa-user-tag"></i> Rôle actuel</th>
+            <th><i class="fas fa-toggle-on"></i> Statut</th>
+            <th><i class="fas fa-cogs"></i> Attribuer un rôle</th>
+            <th><i class="fas fa-check"></i> </th>
+            <th><i class="fas fa-trash-can"></i></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let user of users; let i = index">
+            <td>{{ user.firstName }} {{ user.lastName }}</td>
+            <td class="email-cell">{{ user.email }}</td>
+            <td>
+              <span class="badge" [ngClass]="getRoleBadgeClass(user.role)">
+                <i [ngClass]="getRoleIcon(user.role)"></i>
+                {{ user.role }}
+              </span>
+            </td>
+            <td>
+              <span class="badge" [ngClass]="user.enabled ? 'badge-enabled' : 'badge-disabled'">
+                <i [ngClass]="user.enabled ? 'fas fa-circle-check' : 'fas fa-circle-xmark'"></i>
+                {{ user.enabled ? 'Actif' : 'Inactif' }}
+              </span>
+            </td>
+            <td>
+              <select [(ngModel)]="selectedRoleMap[user.id]" [ngClass]="getSelectedRoleClass(selectedRoleMap[user.id])">
+                <option *ngFor="let r of roles" [value]="r">{{ r }}</option>
+              </select>
+            </td>
+            <td>
+              <button
+                class="btn-assign"
+                (click)="assignRole(user)"
+                [disabled]="assigningRole === user.id || selectedRoleMap[user.id] === user.role">
+                {{ assigningRole === user.id ? '...' : 'Appliquer' }}
+              </button>
+            </td>
+            <td>
+              <button
+                class="btn-delete"
+                (click)="deleteUser(user)"
+                title="Supprimer l'utilisateur">
+                <i class="fas fa-trash-alt"></i>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p *ngIf="users.length === 0" class="empty-msg">Aucun utilisateur trouvé.</p>
+    </div>
+  </div>
+
+  <!-- Assign Agent to Students -->
+  <div class="users-card" *ngIf="!loading && students.length > 0">
+    <div class="card-header">
+      <h3>
+        <i class="fas fa-user-tie"></i> Attribuer un agent aux étudiants
+      </h3>
+    </div>
+
+    <div class="table-container">
+      <p *ngIf="agents.length === 0" class="empty-msg">
+        Aucun agent disponible. Attribuez d'abord le rôle d'AGENT à un utilisateur.
+      </p>
+
+      <table *ngIf="agents.length > 0">
+        <thead>
+          <tr>
+            <th><i class="fas fa-user-graduate"></i> Étudiant</th>
+            <th><i class="fas fa-envelope"></i> Email</th>
+            <th><i class="fas fa-user-tie"></i> Attribuer un agent</th>
+            <th><i class="fas fa-check"></i> </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let student of students">
+            <td>{{ student.firstName }} {{ student.lastName }}</td>
+            <td class="email-cell">{{ student.email }}</td>
+            <td>
+              <select [(ngModel)]="selectedAgentMap[student.id]">
+                <option [ngValue]="undefined" disabled>-- Sélectionner un agent --</option>
+                <option *ngFor="let agent of agents" [ngValue]="agent.id">
+                  {{ agent.firstName }} {{ agent.lastName }}
+                </option>
+              </select>
+            </td>
+            <td>
+              <button
+                class="btn-assign-agent"
+                (click)="assignAgent(student)"
+                [disabled]="assigningAgent === student.id || !selectedAgentMap[student.id]">
+                {{ assigningAgent === student.id ? '...' : 'Attribuer' }}
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Role change confirmation (centered modal) -->
+  <div
+    class="role-confirm-backdrop"
+    *ngIf="roleConfirmOpen && roleConfirmUser && roleConfirmNewRole"
+    (click)="onRoleConfirmBackdropClick($event)"
+    role="presentation"
+  >
+    <div
+      class="role-confirm-dialog"
+      (click)="$event.stopPropagation()"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="role-confirm-title"
+    >
+      <div class="role-confirm-header">
+        <div class="role-confirm-icon-wrap">
+          <i class="fas fa-shield-halved" aria-hidden="true"></i>
+        </div>
+        <h3 id="role-confirm-title">Confirmer le changement de rôle</h3>
+        <p class="role-confirm-subtitle">Entrez le code de confirmation administrateur pour appliquer ce changement.</p>
+      </div>
+
+      <div class="role-confirm-body">
+        <div class="role-confirm-user-card">
+          <p class="role-confirm-label">Utilisateur</p>
+          <p class="role-confirm-name">
+            {{ roleConfirmUser.firstName }} {{ roleConfirmUser.lastName }}
+          </p>
+          <p class="role-confirm-email">{{ roleConfirmUser.email }}</p>
+        </div>
+
+        <div class="role-confirm-transition">
+          <span class="role-pill role-pill-from">
+            <i [ngClass]="getRoleIcon(roleConfirmUser.role)"></i>
+            {{ roleConfirmUser.role }}
+          </span>
+          <i class="fas fa-arrow-right role-confirm-arrow" aria-hidden="true"></i>
+          <span class="role-pill role-pill-to">
+            <i [ngClass]="getRoleIcon(roleConfirmNewRole)"></i>
+            {{ roleConfirmNewRole }}
+          </span>
+        </div>
+
+        <form (ngSubmit)="submitRoleConfirm()" class="role-confirm-form">
+          <label class="role-confirm-field-label" for="role-confirm-code">Code de confirmation</label>
+          <input
+            id="role-confirm-code"
+            name="roleConfirmCode"
+            type="text"
+            class="role-confirm-input"
+            [(ngModel)]="roleConfirmCodeInput"
+            (input)="roleConfirmModalError = ''"
+            autocomplete="off"
+            autocapitalize="off"
+            spellcheck="false"
+          />
+          <p class="role-confirm-modal-error" *ngIf="roleConfirmModalError" role="alert">
+            <i class="fas fa-circle-exclamation" aria-hidden="true"></i>
+            {{ roleConfirmModalError }}
+          </p>
+          <div class="role-confirm-actions">
+            <button type="button" class="btn-role-cancel" (click)="cancelRoleConfirm()">
+              Annuler
+            </button>
+            <button
+              type="submit"
+              class="btn-role-confirm"
+              [disabled]="assigningRole !== null"
+            >
+              <i class="fas fa-check" aria-hidden="true"></i>
+              Appliquer le rôle
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

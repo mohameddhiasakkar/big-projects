@@ -1,0 +1,1250 @@
+<div class="student-layout">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="student-sidebar">
+
+    <!-- Profile Summary -->
+    <div class="sidebar-profile">
+      <div class="sidebar-avatar">
+        <img *ngIf="getAvatarUrl()" [src]="getAvatarUrl()" alt="avatar" class="avatar-img" />
+        <span *ngIf="!getAvatarUrl()" class="avatar-initials">{{ getInitials() }}</span>
+      </div>
+      <div class="sidebar-info" *ngIf="!isLoadingProfile">
+        <p class="sidebar-name">{{ profile?.user?.firstName }} {{ profile?.user?.lastName }}</p>
+        <span class="sidebar-role">{{ userRole === 'STUDENT' ? 'Étudiant' : userRole }}</span>
+      </div>
+      <div class="sidebar-info" *ngIf="isLoadingProfile">
+        <div class="skeleton skeleton-name">Chargement...</div>
+        <div class="skeleton skeleton-role">Rôle...</div>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="sidebar-nav">
+      <button (click)="setSection('profile')"
+        [class.active]="activeSection === 'profile'" class="nav-btn">
+        <i class="fa-solid fa-user"></i>
+        Profil
+      </button>
+      <button (click)="setSection('documents')"
+        [class.active]="activeSection === 'documents'" class="nav-btn">
+        <i class="fa-solid fa-file-alt"></i>
+        Documents
+      </button>
+      <button (click)="setSection('progress')"
+        [class.active]="activeSection === 'progress'" class="nav-btn">
+        <i class="fa-solid fa-chart-line"></i>
+        Ma progression
+      </button>
+      <button (click)="setSection('quizzes')"
+        [class.active]="activeSection === 'quizzes'" class="nav-btn">
+        <i class="fa-solid fa-list-check"></i>
+        Mes quiz
+      </button>
+      <a routerLink="/ml-model" class="nav-btn nav-link-btn">
+        <i class="fa-solid fa-robot"></i>
+        Prédiction d'admission
+      </a>
+      <a routerLink="/profile" class="nav-btn nav-link-btn">
+        <i class="fa-solid fa-id-card"></i>
+        Profil complet
+      </a>
+      <button (click)="setSection('agent')"
+        [class.active]="activeSection === 'agent'" class="nav-btn">
+        <i class="fa-solid fa-user-tie"></i>
+        Mon Agent
+        <span *ngIf="hasAgent" class="agent-dot"></span>
+      </button>
+      <a routerLink="/chat" class="nav-btn chat-nav-btn">
+        <i class="fa-solid fa-comment-dots"></i>
+        Discuter avec l'agent
+        <span class="chat-badge" *ngIf="unreadMessagesCount > 0">
+          {{ unreadMessagesCount > 99 ? '99+' : unreadMessagesCount }}
+        </span>
+      </a>
+      <a routerLink="/ticket" class="nav-btn ticket-nav-btn">
+        <i class="fa-solid fa-ticket"></i>
+        Tickets
+      </a>
+    </nav>
+
+    <button (click)="logout()" class="logout-btn">
+      <i class="fa-solid fa-sign-out-alt"></i>
+      Déconnexion
+    </button>
+  </aside>
+
+  <!-- ── MAIN CONTENT ── -->
+  <main class="student-main">
+
+    <!-- ═══════════ PROFILE SECTION ═══════════ -->
+    <div *ngIf="activeSection === 'profile'">
+
+      <div *ngIf="isLoadingProfile" class="loading-state">
+        <div class="spinner"></div>
+        <p>
+          <i class="fa-solid fa-spinner fa-spin"></i>
+          Chargement du profil...
+        </p>
+      </div>
+
+      <div *ngIf="!isLoadingProfile && !profile" class="empty-state">
+        <div class="empty-icon">
+          <i class="fa-solid fa-user"></i>
+        </div>
+        <h3>Aucun profil trouvé</h3>
+        <p>Rendez-vous sur votre page de profil pour configurer votre profil étudiant.</p>
+        <a routerLink="/profile" class="primary-btn">
+          <i class="fa-solid fa-arrow-right"></i>
+          Aller au Profil
+        </a>
+      </div>
+
+      <div *ngIf="!isLoadingProfile && profile">
+
+        <!-- Profile Header Card -->
+        <div class="profile-hero">
+          <div class="hero-avatar">
+            <img *ngIf="getAvatarUrl()" [src]="getAvatarUrl()" alt="avatar" class="hero-avatar-img" />
+            <span *ngIf="!getAvatarUrl()" class="hero-initials">{{ getInitials() }}</span>
+          </div>
+          <div class="hero-info">
+            <h2>{{ profile.user?.firstName }} {{ profile.user?.lastName }}</h2>
+            <p class="hero-username">
+              <i class="fa-solid fa-at"></i>
+              {{ profile.user?.username }}
+            </p>
+            <p class="hero-email">
+              <i class="fa-solid fa-envelope"></i>
+              {{ profile.user?.email }}
+            </p>
+            <div class="hero-tags">
+              <span class="tag tag-role">
+                <i class="fa-solid fa-tag"></i>
+                {{ userRole === 'STUDENT' ? 'Étudiant' : userRole }}
+              </span>
+              <span *ngIf="profile.currentStudyLevel" class="tag tag-level">
+                <i class="fa-solid fa-graduation-cap"></i>
+                {{ profile.currentStudyLevel }}
+              </span>
+              <span *ngIf="profile.speciality" class="tag tag-spec">
+                <i class="fa-solid fa-flask"></i>
+                {{ profile.speciality }}
+              </span>
+            </div>
+          </div>
+          <a routerLink="/profile" class="edit-profile-btn">
+            <i class="fa-solid fa-pen"></i>
+            Modifier le profil
+          </a>
+        </div>
+
+        <!-- Info Grid -->
+        <div class="info-cards">
+
+          <!-- Academic Card -->
+          <div class="info-card">
+            <h4 class="card-title">
+              <i class="fa-solid fa-graduation-cap"></i>
+              Infos Académiques
+            </h4>
+            <div class="card-grid">
+              <div class="card-item">
+                <span class="item-label">Niveau actuel</span>
+                <span class="item-value">{{ profile.currentStudyLevel || '—' }}</span>
+              </div>
+              <div class="card-item">
+                <span class="item-label">Niveau souhaité</span>
+                <span class="item-value">{{ profile.wishedStudyLevel || '—' }}</span>
+              </div>
+              <div class="card-item">
+                <span class="item-label">Année universitaire</span>
+                <span class="item-value">{{ profile.universityYear ? 'Année ' + profile.universityYear : '—' }}</span>
+              </div>
+              <div class="card-item">
+                <span class="item-label">Type d'établissement</span>
+                <span class="item-value">{{ profile.collegeType || '—' }}</span>
+              </div>
+              <div class="card-item">
+                <span class="item-label">Budget</span>
+                <span class="item-value">{{ profile.budget ? profile.budget + ' $' : '—' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bio Card -->
+          <div class="info-card">
+            <h4 class="card-title">
+              <i class="fa-solid fa-address-card"></i>
+              À propos de moi
+            </h4>
+            <p class="bio-text">{{ profile.bio || 'Aucune bio ajoutée pour le moment.' }}</p>
+          </div>
+
+          <!-- Languages Card -->
+          <div class="info-card">
+            <h4 class="card-title">
+              <i class="fa-solid fa-language"></i>
+              Langues
+            </h4>
+            <div class="lang-chips" *ngIf="profile.languages">
+              <ng-container *ngFor="let lang of parseLanguages(profile.languages)">
+                <div class="lang-chip">
+                  <span class="lang-name">{{ lang.name }}</span>
+                  <span class="lang-badge">{{ lang.level }}</span>
+                </div>
+              </ng-container>
+            </div>
+            <p *ngIf="!profile.languages" class="text-muted">
+              <i class="fa-solid fa-info-circle"></i>
+              Aucune langue ajoutée.
+            </p>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════ QUIZZES SECTION ═══════════ -->
+    <div *ngIf="activeSection === 'quizzes'">
+      <div class="section-header">
+        <h2>
+          <i class="fa-solid fa-list-check"></i>
+          Quiz assignés
+        </h2>
+        <p class="section-sub">Consultez vos quiz assignés et révisez les questions.</p>
+      </div>
+
+      <div *ngIf="quizError" class="alert alert-error">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        {{ quizError }}
+      </div>
+
+      <div *ngIf="timeExpiredMessage" class="alert alert-error" style="margin-top: 10px;">
+        <i class="fa-solid fa-hourglass-end"></i>
+        {{ timeExpiredMessage }}
+      </div>
+
+      <div *ngIf="isLoadingQuizzes" class="loading-state">
+        <div class="spinner"></div>
+        <p>
+          <i class="fa-solid fa-spinner fa-spin"></i>
+          Loading quizzes...
+        </p>
+      </div>
+
+      <div class="quiz-grid" *ngIf="!isLoadingQuizzes">
+        <button class="quiz-card" *ngFor="let quiz of assignedQuizzes" (click)="openQuiz(quiz)">
+          <h4>{{ quiz.title }}</h4>
+          <p>{{ quiz.description || 'No description provided.' }}</p>
+          <div class="quiz-time-badge" *ngIf="hasValidTiming(quiz)" style="margin: 8px 0; font-size: 0.8rem; color: #666;">
+            <i class="fa-regular fa-clock"></i> {{ getQuizStartTime(quiz) | date:'shortTime' }} - {{ getQuizEndTime(quiz) | date:'shortTime' }}
+            <div style="font-size: 0.7rem;">{{ getQuizStartTime(quiz) | date:'mediumDate' }}</div>
+          </div>
+          <span class="quiz-lang">{{ quiz.language || 'General' }}</span>
+        </button>
+        <p *ngIf="assignedQuizzes.length === 0" class="text-muted">No assigned quizzes yet.</p>
+      </div>
+
+      <div class="quiz-preview" *ngIf="selectedQuiz">
+        <!-- Status Overlay -->
+        <div class="quiz-timing-notice" *ngIf="getQuizStatus(selectedQuiz) !== 'Active'" style="padding: 2rem; text-align: center; background: #f8f9fa; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #dee2e6;">
+          <i class="fa-solid fa-lock" style="font-size: 2rem; color: #6c757d; margin-bottom: 1rem;"></i>
+          <h3 *ngIf="getQuizStatus(selectedQuiz) === 'Upcoming'">Quiz Not Started Yet</h3>
+          <h3 *ngIf="getQuizStatus(selectedQuiz) === 'Expired'">Quiz Has Ended</h3>
+          <p>This quiz is only available between:<br>
+            <strong>{{ getQuizStartTime(selectedQuiz) | date:'medium' }}</strong> and
+            <strong>{{ getQuizEndTime(selectedQuiz) | date:'medium' }}</strong>
+          </p>
+        </div>
+
+        <!-- Quiz Content (Only show if Active) -->
+        <div *ngIf="getQuizStatus(selectedQuiz) === 'Active'" style="display: flex; gap: 24px; align-items: flex-start;">
+
+          <!-- Left Sidebar: Quiz Timing & Status -->
+          <aside style="flex: 0 0 240px; background: #0A0F2A; border: 1px solid rgba(217, 198, 130, 0.3); border-radius: 16px; padding: 20px; position: sticky; top: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.4);">
+            <h4 style="color: #d9c682; margin: 0 0 15px; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1.5px; border-bottom: 1px solid rgba(217,198,130,0.2); padding-bottom: 10px;">
+              <i class="fa-solid fa-hourglass-half"></i> Quiz Schedule
+            </h4>
+
+            <div style="margin-bottom: 15px;">
+              <p style="font-size: 0.7rem; color: #94a3b8; margin: 0 0 4px; font-weight: 600;">STARTS</p>
+              <p style="font-weight: 600; color: #f8fafc; margin: 0; font-size: 0.85rem;">{{ hasValidTiming(selectedQuiz) ? (getQuizStartTime(selectedQuiz) | date:'medium') : 'Not Set' }}</p>
+            </div>
+
+            <div style="margin-bottom: 25px;">
+              <p style="font-size: 0.7rem; color: #94a3b8; margin: 0 0 4px; font-weight: 600;">DEADLINE</p>
+              <p style="font-weight: 600; color: #ef4444; margin: 0; font-size: 0.85rem;">{{ hasValidTiming(selectedQuiz) ? (getQuizEndTime(selectedQuiz) | date:'medium') : 'Not Set' }}</p>
+            </div>
+
+            <div style="padding: 15px; background: rgba(217, 198, 130, 0.1); border-radius: 12px; border: 1px solid rgba(217, 198, 130, 0.2); text-align: center;">
+              <p style="font-size: 0.65rem; color: #d9c682; margin: 0 0 5px; font-weight: 800; text-transform: uppercase;">Time Left</p>
+              <p style="font-size: 1.8rem; font-weight: 800; color: #d9c682; margin: 0; line-height: 1;">{{ remainingTime || '--:--' }}</p>
+            </div>
+          </aside>
+
+          <!-- Main Quiz Content Area -->
+          <div style="flex: 1;">
+            <h3>{{ selectedQuiz.title }}</h3>
+
+        <div class="quiz-progress">
+          <div class="quiz-progress-header">
+            <span>Progress</span>
+            <span>{{ getAnsweredCount() }}/{{ selectedQuizQuestions.length }} answered</span>
+          </div>
+          <div class="quiz-progress-bar">
+            <div class="quiz-progress-fill" [style.width.%]="getProgressPercent()"></div>
+          </div>
+        </div>
+
+        <div class="quiz-mode-toggle" *ngIf="selectedQuizQuestions.length > 0">
+          <button (click)="backToQuiz()" [class.active]="!reviewMode">Answer</button>
+          <button (click)="enterReviewMode()" [class.active]="reviewMode">Review</button>
+        </div>
+
+        <p class="text-muted" *ngIf="!reviewMode">Question {{ currentQuestionIndex + 1 }} / {{ selectedQuizQuestions.length }}</p>
+
+        <div *ngIf="selectedQuizQuestions.length > 0 && !reviewMode" class="question-box">
+          <h4>{{ selectedQuizQuestions[currentQuestionIndex].questionText }}</h4>
+          <div class="answer-grid">
+            <button
+              class="answer-btn"
+              [class.active]="getSelectedAnswer(selectedQuizQuestions[currentQuestionIndex].id) === 'A'"
+              (click)="chooseAnswer(selectedQuizQuestions[currentQuestionIndex].id, 'A')">
+              A. {{ selectedQuizQuestions[currentQuestionIndex].optionA }}
+            </button>
+            <button
+              class="answer-btn"
+              [class.active]="getSelectedAnswer(selectedQuizQuestions[currentQuestionIndex].id) === 'B'"
+              (click)="chooseAnswer(selectedQuizQuestions[currentQuestionIndex].id, 'B')">
+              B. {{ selectedQuizQuestions[currentQuestionIndex].optionB }}
+            </button>
+            <button
+              class="answer-btn"
+              [class.active]="getSelectedAnswer(selectedQuizQuestions[currentQuestionIndex].id) === 'C'"
+              (click)="chooseAnswer(selectedQuizQuestions[currentQuestionIndex].id, 'C')">
+              C. {{ selectedQuizQuestions[currentQuestionIndex].optionC }}
+            </button>
+            <button
+              class="answer-btn"
+              [class.active]="getSelectedAnswer(selectedQuizQuestions[currentQuestionIndex].id) === 'D'"
+              (click)="chooseAnswer(selectedQuizQuestions[currentQuestionIndex].id, 'D')">
+              D. {{ selectedQuizQuestions[currentQuestionIndex].optionD }}
+            </button>
+          </div>
+        </div>
+
+        <div *ngIf="selectedQuizQuestions.length > 0 && reviewMode" class="review-panel">
+          <div class="review-item" *ngFor="let question of selectedQuizQuestions; let i = index">
+            <div class="review-item-header">
+              <strong>Q{{ i + 1 }}.</strong>
+              <button class="review-edit-btn" (click)="jumpToQuestion(i)">Edit</button>
+            </div>
+            <p>{{ question.questionText }}</p>
+            <div class="review-answer">Your answer: {{ getSelectedAnswer(question.id) || 'Not answered' }}</div>
+          </div>
+        </div>
+
+        <div class="question-nav" *ngIf="selectedQuizQuestions.length > 0">
+          <button (click)="prevQuestion()" [disabled]="currentQuestionIndex === 0">Previous</button>
+          <button (click)="nextQuestion()" [disabled]="currentQuestionIndex === selectedQuizQuestions.length - 1">Next</button>
+          <button (click)="enterReviewMode()" [disabled]="!canSubmitQuiz()">Review Answers</button>
+          <button (click)="submitQuiz()" [disabled]="!canSubmitQuiz() || submittingQuiz">
+            {{ submittingQuiz ? 'Submitting...' : 'Finish Quiz' }}
+          </button>
+        </div>
+
+        <div class="quiz-result" *ngIf="quizResult">
+          <h4>{{ quizResult.passed ? 'Passed' : 'Not Passed' }}</h4>
+          <p>{{ quizResult.message }}</p>
+          <p class="score">Score: {{ quizResult.score | number:'1.0-0' }}%</p>
+        </div>
+      </div>
+      </div>
+      </div>
+    </div>
+    <!-- ═══════════ SECTION DOCUMENTS ═══════════ -->
+    <div *ngIf="activeSection === 'documents'">
+
+      <div class="section-header">
+        <h2>
+          <i class="fa-solid fa-file-alt"></i>
+          Mes Documents
+        </h2>
+        <p class="section-sub">Téléchargez et gérez vos documents requis pour votre dossier</p>
+      </div>
+
+      <!-- Alertes -->
+      <div *ngIf="uploadSuccess" class="alert alert-success">
+        <i class="fa-solid fa-circle-check"></i>
+        {{ uploadSuccess }}
+      </div>
+      <div *ngIf="uploadError" class="alert alert-error">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        {{ uploadError }}
+      </div>
+
+      <!-- Onglets documents -->
+      <div class="doc-tabs">
+        <button (click)="activeDocTab = 'cv'; uploadError = ''; uploadSuccess = ''"
+                [class.active]="activeDocTab === 'cv'" class="doc-tab">
+          <i class="fa-solid fa-file-pdf"></i>
+          CV
+          <span *ngIf="getDocumentByType('CV')"
+                [ngClass]="getStatusClass(getDocumentByType('CV')!.status)"
+                class="tab-status-dot"></span>
+        </button>
+        <button (click)="activeDocTab = 'passport'; uploadError = ''; uploadSuccess = ''"
+                [class.active]="activeDocTab === 'passport'" class="doc-tab">
+          <i class="fa-solid fa-passport"></i>
+          Passeport
+          <span *ngIf="getDocumentByType('PASSPORT')"
+                [ngClass]="getStatusClass(getDocumentByType('PASSPORT')!.status)"
+                class="tab-status-dot"></span>
+        </button>
+        <button (click)="activeDocTab = 'idcard'; uploadError = ''; uploadSuccess = ''"
+                [class.active]="activeDocTab === 'idcard'" class="doc-tab">
+          <i class="fa-solid fa-id-card"></i>
+          Carte d'identité
+          <span *ngIf="getDocumentByType('ID_CARD')"
+                [ngClass]="getStatusClass(getDocumentByType('ID_CARD')!.status)"
+                class="tab-status-dot"></span>
+        </button>
+        <button (click)="activeDocTab = 'diploma'; uploadError = ''; uploadSuccess = ''"
+                [class.active]="activeDocTab === 'diploma'" class="doc-tab">
+          <i class="fa-solid fa-graduation-cap"></i>
+          Diplôme
+          <span *ngIf="getDocumentByType('DIPLOMA')"
+                [ngClass]="getStatusClass(getDocumentByType('DIPLOMA')!.status)"
+                class="tab-status-dot"></span>
+        </button>
+        <button (click)="activeDocTab = 'transcript'; uploadError = ''; uploadSuccess = ''"
+                [class.active]="activeDocTab === 'transcript'" class="doc-tab">
+          <i class="fa-solid fa-scroll"></i>
+          Relevé de notes
+          <span *ngIf="getDocumentByType('TRANSCRIPT')"
+                [ngClass]="getStatusClass(getDocumentByType('TRANSCRIPT')!.status)"
+                class="tab-status-dot"></span>
+        </button>
+        <button (click)="activeDocTab = 'coverletter'; uploadError = ''; uploadSuccess = ''"
+                [class.active]="activeDocTab === 'coverletter'" class="doc-tab">
+          <i class="fa-solid fa-envelope-open-text"></i>
+          Lettre de motivation
+          <span *ngIf="getDocumentByType('COVER_LETTER')"
+                [ngClass]="getStatusClass(getDocumentByType('COVER_LETTER')!.status)"
+                class="tab-status-dot"></span>
+        </button>
+        <button (click)="activeDocTab = 'other'; uploadError = ''; uploadSuccess = ''"
+                [class.active]="activeDocTab === 'other'" class="doc-tab">
+          <i class="fa-solid fa-folder-open"></i>
+          Autre
+          <span *ngIf="getDocumentByType('OTHER')"
+                [ngClass]="getStatusClass(getDocumentByType('OTHER')!.status)"
+                class="tab-status-dot"></span>
+        </button>
+      </div>
+
+      <!-- Chargement -->
+      <div *ngIf="isLoadingDocs" class="loading-state">
+        <div class="spinner"></div>
+        <p>
+          <i class="fa-solid fa-spinner fa-spin"></i>
+          Chargement des documents...
+        </p>
+      </div>
+
+      <div *ngIf="!isLoadingDocs" class="doc-content">
+
+        <!-- ── Onglet CV ── -->
+        <div *ngIf="activeDocTab === 'cv'">
+          <div *ngIf="getDocumentByType('CV')" class="doc-existing">
+            <div class="doc-existing-header">
+              <div>
+                <p class="doc-filename">
+                  <i class="fa-solid fa-paperclip"></i>
+                  {{ getDocumentByType('CV')!.fileName }}
+                </p>
+                <p class="doc-date">
+                  <i class="fa-regular fa-calendar"></i>
+                  Envoyé le : {{ getDocumentByType('CV')!.uploadedAt | date:'mediumDate' }}
+                </p>
+              </div>
+              <span class="status-badge" [ngClass]="getStatusClass(getDocumentByType('CV')!.status)">
+                <i *ngIf="getDocumentByType('CV')!.status === 'APPROVED'" class="fa-solid fa-check-circle"></i>
+                <i *ngIf="getDocumentByType('CV')!.status === 'REJECTED'" class="fa-solid fa-times-circle"></i>
+                <i *ngIf="getDocumentByType('CV')!.status === 'PENDING'" class="fa-solid fa-clock"></i>
+                {{ getStatusLabel(getDocumentByType('CV')!.status) }}
+              </span>
+            </div>
+          </div>
+
+          <div class="doc-form-card">
+            <h4>
+              <i *ngIf="!getDocumentByType('CV')" class="fa-solid fa-upload"></i>
+              <i *ngIf="getDocumentByType('CV')" class="fa-solid fa-rotate"></i>
+              {{ getDocumentByType('CV') ? 'Remplacer le CV' : 'Envoyer mon CV' }}
+            </h4>
+            <div class="form-group">
+              <label class="form-label">Fichier CV (PDF/DOC) *</label>
+              <div class="file-input-wrapper">
+                <input type="file" accept=".pdf,.doc,.docx" (change)="onFileSelected($event, 'cv')" class="file-input" id="cv-file" />
+                <label for="cv-file" class="file-label">
+                  <i class="fa-solid fa-folder-open"></i>
+                  {{ cvFile ? cvFile.name : 'Choisir un fichier...' }}
+                </label>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Résumé professionnel</label>
+              <textarea name="cvSummary" [(ngModel)]="cvForm.summary" rows="3"
+                        placeholder="Bref aperçu de votre parcours..."
+                        class="form-input form-textarea"></textarea>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Expérience</label>
+                <textarea name="cvExp" [(ngModel)]="cvForm.experience" rows="3"
+                          placeholder="Expériences professionnelles / stages..."
+                          class="form-input form-textarea"></textarea>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Compétences</label>
+                <textarea name="cvSkills" [(ngModel)]="cvForm.skills" rows="3"
+                          placeholder="Compétences techniques et soft skills..."
+                          class="form-input form-textarea"></textarea>
+              </div>
+            </div>
+            <button (click)="uploadCv()" [disabled]="isUploading" class="upload-btn">
+              <i *ngIf="!isUploading" class="fa-solid fa-cloud-upload-alt"></i>
+              <i *ngIf="isUploading" class="fa-solid fa-spinner fa-spin"></i>
+              {{ isUploading ? 'Envoi en cours...' : 'Envoyer le CV' }}
+            </button>
+
+            <!-- ── Analyse IA du CV ── -->
+            <div *ngIf="getDocumentByType('CV')" class="cv-analysis-section">
+
+              <div class="analysis-trigger">
+                <div class="analysis-trigger-info">
+                  <h4>
+                    <i class="fa-solid fa-robot"></i>
+                    Analyse IA de votre CV
+                  </h4>
+                  <p>Obtenez un score et des recommandations personnalisées grâce à l'IA</p>
+                </div>
+                <button (click)="analyzeExistingCv()" [disabled]="isAnalyzingCv" class="analyze-btn">
+                  <span *ngIf="!isAnalyzingCv">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    Analyser mon CV
+                  </span>
+                  <span *ngIf="isAnalyzingCv" class="analyzing-text">
+                    <i class="fa-solid fa-spinner fa-spin"></i>
+                    Analyse en cours...
+                  </span>
+                </button>
+              </div>
+
+              <div *ngIf="analysisError" class="alert alert-error">
+                <i class="fa-solid fa-circle-exclamation"></i>
+                {{ analysisError }}
+              </div>
+
+              <div *ngIf="cvAnalysis && !isAnalyzingCv" class="analysis-results">
+
+                <div class="score-card">
+                  <div class="score-circle" [style.borderColor]="getScoreColor(cvAnalysis.score)">
+                    <span class="score-number" [style.color]="getScoreColor(cvAnalysis.score)">
+                      {{ cvAnalysis.score }}
+                    </span>
+                    <span class="score-max">/100</span>
+                  </div>
+                  <div class="score-info">
+                    <h3 class="score-label" [style.color]="getScoreColor(cvAnalysis.score)">
+                      <i class="fa-solid fa-chart-line"></i>
+                      {{ getScoreLabel(cvAnalysis.score) }}
+                    </h3>
+                    <p class="score-feedback">{{ cvAnalysis.overallFeedback }}</p>
+                  </div>
+                </div>
+
+                <div class="score-bar-wrapper">
+                  <div class="score-bar-fill"
+                       [style.width]="cvAnalysis.score + '%'"
+                       [style.background]="getScoreColor(cvAnalysis.score)">
+                  </div>
+                </div>
+
+                <div class="analysis-grid">
+
+                  <div class="analysis-card strengths-card">
+                    <h4><i class="fa-solid fa-circle-check"></i> Points forts</h4>
+                    <ul>
+                      <li *ngFor="let s of parseList(cvAnalysis.strengths)">
+                        <i class="fa-solid fa-check"></i> {{ s }}
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div class="analysis-card weaknesses-card">
+                    <h4><i class="fa-solid fa-circle-exclamation"></i> Points faibles</h4>
+                    <ul>
+                      <li *ngFor="let w of parseList(cvAnalysis.weaknesses)">
+                        <i class="fa-solid fa-xmark"></i> {{ w }}
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div class="analysis-card suggestions-card">
+                    <h4><i class="fa-solid fa-lightbulb"></i> Suggestions</h4>
+                    <ul>
+                      <li *ngFor="let s of parseList(cvAnalysis.suggestions)">
+                        <i class="fa-solid fa-arrow-right"></i> {{ s }}
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div class="analysis-card formatting-card">
+                    <h4><i class="fa-solid fa-file-lines"></i> Mise en forme</h4>
+                    <p>{{ cvAnalysis.formattingFeedback }}</p>
+                  </div>
+
+                  <div class="analysis-card keywords-card">
+                    <h4><i class="fa-solid fa-key"></i> Mots-clés détectés</h4>
+                    <div class="keyword-chips">
+                      <span *ngFor="let k of parseList(cvAnalysis.keywordsFound)" class="keyword-chip found-chip">
+                        <i class="fa-solid fa-check-circle"></i> {{ k }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="analysis-card missing-card">
+                    <h4><i class="fa-solid fa-key"></i> Mots-clés manquants</h4>
+                    <div class="keyword-chips">
+                      <span *ngFor="let k of parseList(cvAnalysis.missingKeywords)" class="keyword-chip missing-chip">
+                        <i class="fa-solid fa-times-circle"></i> {{ k }}
+                      </span>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Onglet Passeport ── -->
+        <div *ngIf="activeDocTab === 'passport'">
+          <div *ngIf="getDocumentByType('PASSPORT')" class="doc-existing">
+            <div class="doc-existing-header">
+              <div>
+                <p class="doc-filename"><i class="fa-solid fa-paperclip"></i> {{ getDocumentByType('PASSPORT')!.fileName }}</p>
+                <p class="doc-date"><i class="fa-regular fa-calendar"></i> Envoyé le : {{ getDocumentByType('PASSPORT')!.uploadedAt | date:'mediumDate' }}</p>
+              </div>
+              <span class="status-badge" [ngClass]="getStatusClass(getDocumentByType('PASSPORT')!.status)">
+                <i *ngIf="getDocumentByType('PASSPORT')!.status === 'APPROVED'" class="fa-solid fa-check-circle"></i>
+                <i *ngIf="getDocumentByType('PASSPORT')!.status === 'REJECTED'" class="fa-solid fa-times-circle"></i>
+                <i *ngIf="getDocumentByType('PASSPORT')!.status === 'PENDING'" class="fa-solid fa-clock"></i>
+                {{ getStatusLabel(getDocumentByType('PASSPORT')!.status) }}
+              </span>
+            </div>
+          </div>
+          <div class="doc-form-card">
+            <h4>
+              <i *ngIf="!getDocumentByType('PASSPORT')" class="fa-solid fa-upload"></i>
+              <i *ngIf="getDocumentByType('PASSPORT')" class="fa-solid fa-rotate"></i>
+              {{ getDocumentByType('PASSPORT') ? 'Remplacer le passeport' : 'Envoyer mon passeport' }}
+            </h4>
+            <div class="form-group">
+              <label class="form-label">Fichier passeport (PDF/Image) *</label>
+              <div class="file-input-wrapper">
+                <input type="file" accept=".pdf,image/*" (change)="onFileSelected($event, 'passport')" class="file-input" id="passport-file" />
+                <label for="passport-file" class="file-label">
+                  <i class="fa-solid fa-folder-open"></i>
+                  {{ passportFile ? passportFile.name : 'Choisir un fichier...' }}
+                </label>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Date d'émission *</label>
+                <input type="date" [(ngModel)]="passportForm.issueDate" class="form-input" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Date d'expiration *</label>
+                <input type="date" [(ngModel)]="passportForm.expiryDate" class="form-input" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Pays émetteur *</label>
+              <input type="text" [(ngModel)]="passportForm.issuingCountry" placeholder="ex : Tunisie" class="form-input" />
+            </div>
+            <button (click)="uploadPassport()" [disabled]="isUploading" class="upload-btn">
+              <i *ngIf="!isUploading" class="fa-solid fa-cloud-upload-alt"></i>
+              <i *ngIf="isUploading" class="fa-solid fa-spinner fa-spin"></i>
+              {{ isUploading ? 'Envoi en cours...' : 'Envoyer le passeport' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- ── Onglet Carte d'identité ── -->
+        <div *ngIf="activeDocTab === 'idcard'">
+          <div *ngIf="getDocumentByType('ID_CARD')" class="doc-existing">
+            <div class="doc-existing-header">
+              <div>
+                <p class="doc-filename"><i class="fa-solid fa-paperclip"></i> {{ getDocumentByType('ID_CARD')!.fileName }}</p>
+                <p class="doc-date"><i class="fa-regular fa-calendar"></i> Envoyé le : {{ getDocumentByType('ID_CARD')!.uploadedAt | date:'mediumDate' }}</p>
+              </div>
+              <span class="status-badge" [ngClass]="getStatusClass(getDocumentByType('ID_CARD')!.status)">
+                <i *ngIf="getDocumentByType('ID_CARD')!.status === 'APPROVED'" class="fa-solid fa-check-circle"></i>
+                <i *ngIf="getDocumentByType('ID_CARD')!.status === 'REJECTED'" class="fa-solid fa-times-circle"></i>
+                <i *ngIf="getDocumentByType('ID_CARD')!.status === 'PENDING'" class="fa-solid fa-clock"></i>
+                {{ getStatusLabel(getDocumentByType('ID_CARD')!.status) }}
+              </span>
+            </div>
+          </div>
+          <div class="doc-form-card">
+            <h4>
+              <i *ngIf="!getDocumentByType('ID_CARD')" class="fa-solid fa-upload"></i>
+              <i *ngIf="getDocumentByType('ID_CARD')" class="fa-solid fa-rotate"></i>
+              {{ getDocumentByType('ID_CARD') ? 'Remplacer la carte d\'identité' : 'Envoyer ma carte d\'identité' }}
+            </h4>
+            <div class="form-group">
+              <label class="form-label">Fichier carte d'identité (PDF/Image) *</label>
+              <div class="file-input-wrapper">
+                <input type="file" accept=".pdf,image/*" (change)="onFileSelected($event, 'idcard')" class="file-input" id="idcard-file" />
+                <label for="idcard-file" class="file-label">
+                  <i class="fa-solid fa-folder-open"></i>
+                  {{ idCardFile ? idCardFile.name : 'Choisir un fichier...' }}
+                </label>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Numéro CIN *</label>
+                <input type="text" [(ngModel)]="idCardForm.numId" placeholder="ex : 12345678" class="form-input" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Date de naissance *</label>
+                <input type="date" [(ngModel)]="idCardForm.birthday" class="form-input" />
+              </div>
+            </div>
+            <button (click)="uploadIdCard()" [disabled]="isUploading" class="upload-btn">
+              <i *ngIf="!isUploading" class="fa-solid fa-cloud-upload-alt"></i>
+              <i *ngIf="isUploading" class="fa-solid fa-spinner fa-spin"></i>
+              {{ isUploading ? 'Envoi en cours...' : 'Envoyer la carte d\'identité' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- ── Onglet Diplôme ── -->
+        <div *ngIf="activeDocTab === 'diploma'">
+          <div *ngIf="getDocumentByType('DIPLOMA')" class="doc-existing">
+            <div class="doc-existing-header">
+              <div>
+                <p class="doc-filename"><i class="fa-solid fa-paperclip"></i> {{ getDocumentByType('DIPLOMA')!.fileName }}</p>
+                <p class="doc-date"><i class="fa-regular fa-calendar"></i> Envoyé le : {{ getDocumentByType('DIPLOMA')!.uploadedAt | date:'mediumDate' }}</p>
+              </div>
+              <span class="status-badge" [ngClass]="getStatusClass(getDocumentByType('DIPLOMA')!.status)">
+                <i *ngIf="getDocumentByType('DIPLOMA')!.status === 'APPROVED'" class="fa-solid fa-check-circle"></i>
+                <i *ngIf="getDocumentByType('DIPLOMA')!.status === 'REJECTED'" class="fa-solid fa-times-circle"></i>
+                <i *ngIf="getDocumentByType('DIPLOMA')!.status === 'PENDING'" class="fa-solid fa-clock"></i>
+                {{ getStatusLabel(getDocumentByType('DIPLOMA')!.status) }}
+              </span>
+            </div>
+          </div>
+          <div class="doc-form-card">
+            <h4>
+              <i *ngIf="!getDocumentByType('DIPLOMA')" class="fa-solid fa-upload"></i>
+              <i *ngIf="getDocumentByType('DIPLOMA')" class="fa-solid fa-rotate"></i>
+              {{ getDocumentByType('DIPLOMA') ? 'Remplacer le diplôme' : 'Envoyer mon diplôme' }}
+            </h4>
+            <div class="form-group">
+              <label class="form-label">Fichier diplôme (PDF) *</label>
+              <div class="file-input-wrapper">
+                <input type="file" accept=".pdf,image/*" (change)="onFileSelected($event, 'diploma')" class="file-input" id="diploma-file" />
+                <label for="diploma-file" class="file-label">
+                  <i class="fa-solid fa-folder-open"></i>
+                  {{ diplomaFile ? diplomaFile.name : 'Choisir un fichier...' }}
+                </label>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Titre du diplôme</label>
+                <input type="text" [(ngModel)]="diplomaForm.degree" placeholder="ex : Licence en Informatique" class="form-input" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Domaine d'études</label>
+                <input type="text" [(ngModel)]="diplomaForm.fieldOfStudy" placeholder="ex : Génie logiciel" class="form-input" />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Établissement</label>
+                <input type="text" [(ngModel)]="diplomaForm.institution" placeholder="Nom de l'université" class="form-input" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Année d'obtention</label>
+                <input type="text" [(ngModel)]="diplomaForm.graduationYear" placeholder="ex : 2024" class="form-input" />
+              </div>
+            </div>
+            <button (click)="uploadDiploma()" [disabled]="isUploading" class="upload-btn">
+              <i *ngIf="!isUploading" class="fa-solid fa-cloud-upload-alt"></i>
+              <i *ngIf="isUploading" class="fa-solid fa-spinner fa-spin"></i>
+              {{ isUploading ? 'Envoi en cours...' : 'Envoyer le diplôme' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- ── Onglet Relevé de notes ── -->
+        <div *ngIf="activeDocTab === 'transcript'">
+          <div *ngIf="getDocumentByType('TRANSCRIPT')" class="doc-existing">
+            <div class="doc-existing-header">
+              <div>
+                <p class="doc-filename"><i class="fa-solid fa-paperclip"></i> {{ getDocumentByType('TRANSCRIPT')!.fileName }}</p>
+                <p class="doc-date"><i class="fa-regular fa-calendar"></i> Envoyé le : {{ getDocumentByType('TRANSCRIPT')!.uploadedAt | date:'mediumDate' }}</p>
+              </div>
+              <span class="status-badge" [ngClass]="getStatusClass(getDocumentByType('TRANSCRIPT')!.status)">
+                <i *ngIf="getDocumentByType('TRANSCRIPT')!.status === 'APPROVED'" class="fa-solid fa-check-circle"></i>
+                <i *ngIf="getDocumentByType('TRANSCRIPT')!.status === 'REJECTED'" class="fa-solid fa-times-circle"></i>
+                <i *ngIf="getDocumentByType('TRANSCRIPT')!.status === 'PENDING'" class="fa-solid fa-clock"></i>
+                {{ getStatusLabel(getDocumentByType('TRANSCRIPT')!.status) }}
+              </span>
+            </div>
+          </div>
+          <div class="doc-form-card">
+            <h4>
+              <i *ngIf="!getDocumentByType('TRANSCRIPT')" class="fa-solid fa-upload"></i>
+              <i *ngIf="getDocumentByType('TRANSCRIPT')" class="fa-solid fa-rotate"></i>
+              {{ getDocumentByType('TRANSCRIPT') ? 'Remplacer le relevé' : 'Envoyer mon relevé de notes' }}
+            </h4>
+            <div class="form-group">
+              <label class="form-label">Fichier relevé (PDF) *</label>
+              <div class="file-input-wrapper">
+                <input type="file" accept=".pdf,image/*" (change)="onFileSelected($event, 'transcript')" class="file-input" id="transcript-file" />
+                <label for="transcript-file" class="file-label">
+                  <i class="fa-solid fa-folder-open"></i>
+                  {{ transcriptFile ? transcriptFile.name : 'Choisir un fichier...' }}
+                </label>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Établissement</label>
+                <input type="text" [(ngModel)]="transcriptForm.institution" placeholder="Nom de l'université" class="form-input" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Année académique</label>
+                <input type="text" [(ngModel)]="transcriptForm.academicYear" placeholder="ex : 2023-2024" class="form-input" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Moyenne / GPA</label>
+              <input type="text" [(ngModel)]="transcriptForm.average" placeholder="ex : 15,5/20 ou 3,8/4,0" class="form-input" />
+            </div>
+            <button (click)="uploadTranscript()" [disabled]="isUploading" class="upload-btn">
+              <i *ngIf="!isUploading" class="fa-solid fa-cloud-upload-alt"></i>
+              <i *ngIf="isUploading" class="fa-solid fa-spinner fa-spin"></i>
+              {{ isUploading ? 'Envoi en cours...' : 'Envoyer le relevé de notes' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- ── Onglet Lettre de motivation ── -->
+        <div *ngIf="activeDocTab === 'coverletter'">
+          <div *ngIf="getDocumentByType('COVER_LETTER')" class="doc-existing">
+            <div class="doc-existing-header">
+              <div>
+                <p class="doc-filename"><i class="fa-solid fa-paperclip"></i> {{ getDocumentByType('COVER_LETTER')!.fileName }}</p>
+                <p class="doc-date"><i class="fa-regular fa-calendar"></i> Envoyé le : {{ getDocumentByType('COVER_LETTER')!.uploadedAt | date:'mediumDate' }}</p>
+              </div>
+              <span class="status-badge" [ngClass]="getStatusClass(getDocumentByType('COVER_LETTER')!.status)">
+                <i *ngIf="getDocumentByType('COVER_LETTER')!.status === 'APPROVED'" class="fa-solid fa-check-circle"></i>
+                <i *ngIf="getDocumentByType('COVER_LETTER')!.status === 'REJECTED'" class="fa-solid fa-times-circle"></i>
+                <i *ngIf="getDocumentByType('COVER_LETTER')!.status === 'PENDING'" class="fa-solid fa-clock"></i>
+                {{ getStatusLabel(getDocumentByType('COVER_LETTER')!.status) }}
+              </span>
+            </div>
+          </div>
+          <div class="doc-form-card">
+            <h4>
+              <i *ngIf="!getDocumentByType('COVER_LETTER')" class="fa-solid fa-upload"></i>
+              <i *ngIf="getDocumentByType('COVER_LETTER')" class="fa-solid fa-rotate"></i>
+              {{ getDocumentByType('COVER_LETTER') ? 'Remplacer la lettre de motivation' : 'Envoyer ma lettre de motivation' }}
+            </h4>
+            <div class="form-group">
+              <label class="form-label">Fichier lettre de motivation (PDF) *</label>
+              <div class="file-input-wrapper">
+                <input type="file" accept=".pdf,.doc,.docx" (change)="onFileSelected($event, 'coverletter')" class="file-input" id="coverletter-file" />
+                <label for="coverletter-file" class="file-label">
+                  <i class="fa-solid fa-folder-open"></i>
+                  {{ coverLetterFile ? coverLetterFile.name : 'Choisir un fichier...' }}
+                </label>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Université cible</label>
+                <input type="text" [(ngModel)]="coverLetterForm.targetUniversity" placeholder="ex : Université Paris-Saclay" class="form-input" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Formation visée</label>
+                <input type="text" [(ngModel)]="coverLetterForm.targetProgram" placeholder="ex : Master IA" class="form-input" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Contenu de la lettre (optionnel)</label>
+              <textarea [(ngModel)]="coverLetterForm.content" rows="4"
+                        placeholder="Copiez ici le texte de votre lettre de motivation (optionnel)..."
+                        class="form-input form-textarea"></textarea>
+            </div>
+            <button (click)="uploadCoverLetter()" [disabled]="isUploading" class="upload-btn">
+              <i *ngIf="!isUploading" class="fa-solid fa-cloud-upload-alt"></i>
+              <i *ngIf="isUploading" class="fa-solid fa-spinner fa-spin"></i>
+              {{ isUploading ? 'Envoi en cours...' : 'Envoyer la lettre de motivation' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- ── Onglet Autre document ── -->
+        <div *ngIf="activeDocTab === 'other'">
+          <div *ngIf="getDocumentByType('OTHER')" class="doc-existing">
+            <div class="doc-existing-header">
+              <div>
+                <p class="doc-filename"><i class="fa-solid fa-paperclip"></i> {{ getDocumentByType('OTHER')!.fileName }}</p>
+                <p class="doc-date"><i class="fa-regular fa-calendar"></i> Envoyé le : {{ getDocumentByType('OTHER')!.uploadedAt | date:'mediumDate' }}</p>
+              </div>
+              <span class="status-badge" [ngClass]="getStatusClass(getDocumentByType('OTHER')!.status)">
+                <i *ngIf="getDocumentByType('OTHER')!.status === 'APPROVED'" class="fa-solid fa-check-circle"></i>
+                <i *ngIf="getDocumentByType('OTHER')!.status === 'REJECTED'" class="fa-solid fa-times-circle"></i>
+                <i *ngIf="getDocumentByType('OTHER')!.status === 'PENDING'" class="fa-solid fa-clock"></i>
+                {{ getStatusLabel(getDocumentByType('OTHER')!.status) }}
+              </span>
+            </div>
+          </div>
+          <div class="doc-form-card">
+            <h4>
+              <i *ngIf="!getDocumentByType('OTHER')" class="fa-solid fa-upload"></i>
+              <i *ngIf="getDocumentByType('OTHER')" class="fa-solid fa-rotate"></i>
+              {{ getDocumentByType('OTHER') ? 'Remplacer le document' : 'Envoyer un autre document' }}
+            </h4>
+            <div class="form-group">
+              <label class="form-label">Fichier *</label>
+              <div class="file-input-wrapper">
+                <input type="file" accept=".pdf,.doc,.docx,image/*" (change)="onFileSelected($event, 'other')" class="file-input" id="other-file" />
+                <label for="other-file" class="file-label">
+                  <i class="fa-solid fa-folder-open"></i>
+                  {{ otherFile ? otherFile.name : 'Choisir un fichier...' }}
+                </label>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Titre du document *</label>
+              <input type="text" [(ngModel)]="otherForm.documentTitle" placeholder="ex : Lettre de recommandation, Certificat..." class="form-input" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Notes (optionnel)</label>
+              <textarea [(ngModel)]="otherForm.notes" rows="3"
+                        placeholder="Informations complémentaires sur ce document..."
+                        class="form-input form-textarea"></textarea>
+            </div>
+            <button (click)="uploadOtherDoc()" [disabled]="isUploading" class="upload-btn">
+              <i *ngIf="!isUploading" class="fa-solid fa-cloud-upload-alt"></i>
+              <i *ngIf="isUploading" class="fa-solid fa-spinner fa-spin"></i>
+              {{ isUploading ? 'Envoi en cours...' : 'Envoyer le document' }}
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ═══════════ PROGRESS SECTION ═══════════ -->
+<div *ngIf="activeSection === 'progress'">
+
+  <div class="section-header">
+    <h2>
+      <i class="fa-solid fa-chart-line"></i>
+      My Progress
+    </h2>
+    <p class="section-sub">Track your study abroad application journey</p>
+  </div>
+
+  <div *ngIf="isLoadingProgress" class="loading-state">
+    <div class="spinner"></div>
+    <p>
+      <i class="fa-solid fa-spinner fa-spin"></i>
+      Loading progress...
+    </p>
+  </div>
+
+  <div *ngIf="!isLoadingProgress">
+
+    <!-- Progress Bar -->
+    <div class="progress-overview">
+      <div class="progress-bar-wrapper">
+        <div class="progress-bar-fill"
+          [style.width]="(getCompletedCount() / allStages.length * 100) + '%'">
+        </div>
+      </div>
+      <p class="progress-text">
+        <i class="fa-solid fa-check-circle"></i>
+        {{ getCompletedCount() }} / {{ allStages.length }} stages completed
+      </p>
+    </div>
+
+    <!-- Stages Timeline -->
+    <div class="stages-timeline">
+      <div *ngFor="let stage of allStages; let i = index"
+        class="stage-item" [ngClass]="getStageClass(stage)">
+
+        <div class="stage-connector" *ngIf="i > 0"></div>
+
+        <div class="stage-circle">
+          <i *ngIf="getStageStatus(stage) === 'COMPLETED'" class="fa-solid fa-check"></i>
+          <i *ngIf="getStageStatus(stage) === 'IN_PROGRESS'" class="fa-solid fa-rotate-right fa-spin"></i>
+          <span *ngIf="getStageStatus(stage) === 'NOT_STARTED'">{{ i + 1 }}</span>
+        </div>
+
+        <div class="stage-content">
+          <div class="stage-icon">
+            <i [class]="getStageIcon(stage)"></i>
+          </div>
+          <div class="stage-info">
+            <h4 class="stage-name">{{ getStageLabel(stage) }}</h4>
+            <span class="stage-status-label">
+              <i *ngIf="getStageStatus(stage) === 'COMPLETED'" class="fa-solid fa-check-circle"></i>
+              <i *ngIf="getStageStatus(stage) === 'IN_PROGRESS'" class="fa-solid fa-hourglass-half"></i>
+              <i *ngIf="getStageStatus(stage) === 'NOT_STARTED'" class="fa-regular fa-circle"></i>
+              {{ getStageStatus(stage) === 'COMPLETED' ? 'Completed' :
+                 getStageStatus(stage) === 'IN_PROGRESS' ? 'In Progress' : 'Not Started' }}
+            </span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+    <!-- ═══════════ RECOMMENDATIONS SECTION ═══════════ -->
+    <div *ngIf="activeSection === 'recommendations'">
+      <div class="section-header">
+        <h2>
+          <i class="fa-solid fa-wand-magic-sparkles"></i>
+          AI University Recommendations
+        </h2>
+        <p class="section-sub">Get personalized university suggestions based on your profile using our ML model.</p>
+        <p class="text-muted" style="margin-top: 0.5rem;">
+          <i class="fa-solid fa-info-circle"></i>
+          Your profile data is used to pre-fill the form. Adjust the criteria below to refine your recommendations.
+        </p>
+      </div>
+    </div>
+
+    <!-- ═══════════ AGENT SECTION ═══════════ -->
+    <div *ngIf="activeSection === 'agent'">
+
+      <div class="section-header">
+        <h2>
+          <i class="fa-solid fa-user-tie"></i>
+          Mon Agent
+        </h2>
+        <p class="section-sub">Votre agent assigné vous accompagne dans votre parcours d'études à l'étranger.</p>
+      </div>
+
+      <!-- Loading -->
+      <div *ngIf="isLoadingAgent" class="loading-state">
+        <div class="spinner"></div>
+        <p>Chargement des informations de l'agent...</p>
+      </div>
+
+      <!-- No agent assigned -->
+      <div *ngIf="!isLoadingAgent && !hasAgent" class="no-agent-state">
+        <div class="no-agent-icon">👤</div>
+        <h3>Aucun agent assigné</h3>
+        <p>Vous n'avez pas encore d'agent assigné. Contactez l'administration pour être pris en charge.</p>
+        <div class="no-agent-actions">
+          <a routerLink="/ticket" class="agent-action-btn ticket-btn">
+            <i class="fa-solid fa-ticket"></i>
+            Soumettre un ticket
+          </a>
+          <a routerLink="/chat" class="agent-action-btn chat-btn">
+            <i class="fa-solid fa-comment-dots"></i>
+            Contacter le support
+          </a>
+        </div>
+      </div>
+
+      <!-- Agent Profile -->
+      <div *ngIf="!isLoadingAgent && hasAgent && assignedAgent" class="agent-profile-view">
+          <!-- Agent Hero Card -->
+          <div class="agent-hero-card">
+          <div class="agent-hero-avatar">
+            <img *ngIf="getAgentAvatarUrl()"
+                 [src]="getAgentAvatarUrl()"
+                 alt="Agent Avatar"
+                 class="agent-avatar-img" />
+            <span *ngIf="!getAgentAvatarUrl()"
+                  class="agent-initials-large">{{ getAgentInitials() }}</span>
+            <div class="agent-online-indicator" [ngClass]="getAgentStatusClass()"></div>
+          </div>
+            <div class="agent-hero-info">
+              <h2>{{ assignedAgent.firstName }} {{ assignedAgent.lastName }}</h2>
+              <span class="agent-role-badge">
+              <i class="fa-solid fa-briefcase"></i>
+              Agent LinkedU
+            </span>
+              <div class="agent-status-row">
+              <span class="agent-status-badge" [ngClass]="getAgentStatusClass()">
+                <span class="status-dot-small"></span>
+                {{ getAgentStatusLabel() }}
+              </span>
+                <span *ngIf="assignedAgent.availabilityTime" class="agent-availability">
+                <i class="fa-regular fa-clock"></i>
+                  {{ assignedAgent.availabilityTime }}
+              </span>
+              </div>
+              <p class="agent-hero-email">
+                <i class="fa-solid fa-envelope"></i>
+                {{ assignedAgent.email }}
+              </p>
+            </div>
+          <div class="agent-hero-actions">
+            <a routerLink="/chat" class="agent-action-btn chat-btn">
+              <i class="fa-solid fa-comment-dots"></i>
+              Envoyer un message
+            </a>
+            <a routerLink="/ticket" class="agent-action-btn ticket-btn">
+              <i class="fa-solid fa-ticket"></i>
+              Soumettre un ticket
+            </a>
+          </div>
+        </div>
+
+        <!-- Agent Info Cards -->
+        <div class="agent-info-grid">
+
+          <!-- Contact Info -->
+          <div class="agent-info-card">
+            <h4 class="agent-card-title">
+              <i class="fa-solid fa-address-card"></i>
+              Informations de contact
+            </h4>
+            <div class="agent-info-rows">
+              <div class="agent-info-row">
+                <span class="agent-info-label">
+                  <i class="fa-solid fa-user"></i> Nom complet
+                </span>
+                <span class="agent-info-value">
+                  {{ assignedAgent.firstName }} {{ assignedAgent.lastName }}
+                </span>
+              </div>
+              <div class="agent-info-row">
+                <span class="agent-info-label">
+                  <i class="fa-solid fa-at"></i> Nom d'utilisateur
+                </span>
+                <span class="agent-info-value">@{{ assignedAgent.username }}</span>
+              </div>
+              <div class="agent-info-row">
+                <span class="agent-info-label">
+                  <i class="fa-solid fa-envelope"></i> Email
+                </span>
+                <a [href]="'mailto:' + assignedAgent.email" class="agent-info-link">
+                  {{ assignedAgent.email }}
+                </a>
+              </div>
+              <div class="agent-info-row" *ngIf="assignedAgent.contactEmail">
+                <span class="agent-info-label">
+                  <i class="fa-solid fa-envelope-open"></i> Email contact
+                </span>
+                <a [href]="'mailto:' + assignedAgent.contactEmail" class="agent-info-link">
+                  {{ assignedAgent.contactEmail }}
+                </a>
+              </div>
+              <div class="agent-info-row" *ngIf="assignedAgent.phoneNumber">
+                <span class="agent-info-label">
+                  <i class="fa-solid fa-phone"></i> Téléphone
+                </span>
+                <a [href]="'tel:' + assignedAgent.phoneNumber" class="agent-info-link">
+                  {{ assignedAgent.phoneNumber }}
+                </a>
+              </div>
+              <div class="agent-info-row" *ngIf="assignedAgent.address">
+                <span class="agent-info-label">
+                  <i class="fa-solid fa-location-dot"></i> Adresse
+                </span>
+                <span class="agent-info-value">{{ assignedAgent.address }}</span>
+              </div>
+              <div class="agent-info-row" *ngIf="assignedAgent.contactName">
+                <span class="agent-info-label">
+                  <i class="fa-solid fa-id-badge"></i> Nom de contact
+                </span>
+                <span class="agent-info-value">{{ assignedAgent.contactName }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="agent-info-card">
+            <h4 class="agent-card-title">
+              <i class="fa-solid fa-bolt"></i>
+              Actions rapides
+            </h4>
+            <div class="quick-actions-grid">
+              <a routerLink="/chat" class="quick-action-item">
+                <div class="quick-action-icon chat-icon">
+                  <i class="fa-solid fa-comment-dots"></i>
+                </div>
+                <span>Chat</span>
+              </a>
+              <a routerLink="/ticket" class="quick-action-item">
+                <div class="quick-action-icon ticket-icon">
+                  <i class="fa-solid fa-ticket"></i>
+                </div>
+                <span>Ticket</span>
+              </a>
+              <a [href]="'mailto:' + assignedAgent.email" class="quick-action-item">
+                <div class="quick-action-icon email-icon">
+                  <i class="fa-solid fa-envelope"></i>
+                </div>
+                <span>Email</span>
+              </a>
+              <a [href]="'tel:' + assignedAgent.phoneNumber" class="quick-action-item"
+                 *ngIf="assignedAgent.phoneNumber">
+                <div class="quick-action-icon phone-icon">
+                  <i class="fa-solid fa-phone"></i>
+                </div>
+                <span>Appeler</span>
+              </a>
+            </div>
+
+            <!-- Bio section -->
+            <div *ngIf="assignedAgent.bio" class="agent-bio-section">
+              <h5 class="agent-bio-label">
+                <i class="fa-solid fa-quote-left"></i> À propos
+              </h5>
+              <p class="agent-bio-text">{{ assignedAgent.bio }}</p>
+            </div>
+          </div>
+          <!-- Info Banner -->
+          <div class="agent-info-banner">
+            <div class="banner-icon">
+              <i class="fa-solid fa-circle-info"></i>
+            </div>
+            <div class="banner-content">
+              <h4>Votre agent vous accompagne</h4>
+              <p>
+                Votre agent est là pour vous aider à chaque étape de votre parcours :
+                préparation du dossier, choix des universités, obtention du visa et bien plus encore.
+                N'hésitez pas à le contacter via le chat ou un ticket de support.
+              </p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>

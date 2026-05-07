@@ -1,0 +1,13 @@
+package com.linkedu.backend.repositories;
+
+import com.linkedu.backend.entities.Quiz;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+import java.util.List;
+
+@Repository
+public interface QuizRepository extends JpaRepository<Quiz, Long> {
+    List<Quiz> findByCreatedById(Long createdById);
+    List<Quiz> findByCreatedByIdOrderByCreatedAtDesc(Long createdById);
+    List<Quiz> findByLanguageIgnoreCase(String language);
+}

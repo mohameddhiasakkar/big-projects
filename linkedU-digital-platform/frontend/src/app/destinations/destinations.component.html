@@ -1,0 +1,46 @@
+<main>
+  <section class="relative py-32 overflow-hidden text-white bg-cover bg-center" style="background-image: url('assets/Pictures/map.jpg');">
+    <div class="absolute inset-0 bg-gradient-to-br from-blue-950/80 via-blue-900/70 to-gray-900/80"></div>
+    <div class="z-10 relative mx-auto px-6 text-center container">
+      <h1 class="mb-6 font-bold text-4xl md:text-5xl lg:text-6xl leading-tight">
+        NOS <span class="text-yellow-400">DESTINATIONS</span> POUR VOS ETUDES
+      </h1>
+      <p class="mx-auto max-w-2xl text-gray-300 text-xl leading-relaxed">
+        Decouvrez les pays ou nos etudiants etudient et realisez votre reve d'etudes a l'international.
+      </p>
+    </div>
+  </section>
+
+  <section class="relative py-24 overflow-hidden">
+    <div class="absolute inset-0 w-full h-full">
+      <img src="assets/Pictures/map.jpg" alt="World Map Background" class="w-full h-full object-cover opacity-15" />
+      <div class="absolute inset-0 bg-gradient-to-b from-blue-900/60 to-black/60"></div>
+    </div>
+
+    <div class="z-10 relative mx-auto px-6 container">
+      <div *ngIf="isLoading" class="text-white text-center">Chargement des destinations...</div>
+
+      <div *ngIf="!isLoading && errorMessage" class="text-red-300 text-center">
+        {{ errorMessage }}
+      </div>
+
+      <div *ngIf="!isLoading && !errorMessage && destinations.length === 0" class="text-white/80 text-center">
+        Aucune destination disponible pour le moment.
+      </div>
+
+      <div *ngIf="!isLoading && !errorMessage && destinations.length > 0" class="gap-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+        <div *ngFor="let destination of destinations" class="group relative bg-white shadow-lg hover:shadow-2xl mx-auto rounded-full w-72 h-72 overflow-hidden transition-all hover:-translate-y-2 duration-300">
+          <img [src]="getImageUrl(destination)" [alt]="destination.countryName" class="rounded-full w-full h-full object-cover" />
+          <div class="absolute inset-0 flex flex-col justify-end items-center bg-gradient-to-t from-black/70 to-transparent p-6 rounded-full">
+            <h3 class="mb-2 font-bold text-white text-2xl text-center">{{ destination.countryName | uppercase }}</h3>
+            <p class="text-white text-lg text-center">{{ destination.description || ('Etudes en ' + destination.countryName) }}</p>
+            <a [routerLink]="['/destinations/pays', toCountrySlug(destination.countryName)]" class="inline-flex justify-center items-center bg-blue-600 hover:bg-blue-700 mt-3 px-6 py-3 rounded-full font-bold text-white text-lg transition-all">
+              <i class="fa-solid fa-arrow-right mr-2"></i>
+              DECOUVRIR
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
